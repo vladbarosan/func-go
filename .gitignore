@@ -1,3 +1,4 @@
 vendor/
 bin/
 *.so
+rpc/protos/azure-functions/
