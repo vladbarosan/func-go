@@ -3,8 +3,8 @@ package azfunc
 import (
 	"reflect"
 
-	"github.com/radu-matei/azure-functions-golang-worker/logger"
-	"github.com/radu-matei/azure-functions-golang-worker/rpc"
+	"github.com/Azure/azure-functions-go-worker/logger"
+	"github.com/Azure/azure-functions-go-worker/rpc"
 )
 
 // TODO - add other binding and trigger types

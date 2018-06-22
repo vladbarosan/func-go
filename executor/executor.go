@@ -6,11 +6,11 @@ import (
 	"reflect"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/radu-matei/azure-functions-golang-worker/azfunc"
-	"github.com/radu-matei/azure-functions-golang-worker/loader"
-	"github.com/radu-matei/azure-functions-golang-worker/logger"
-	"github.com/radu-matei/azure-functions-golang-worker/rpc"
-	"github.com/radu-matei/azure-functions-golang-worker/util"
+	"github.com/Azure/azure-functions-go-worker/azfunc"
+	"github.com/Azure/azure-functions-go-worker/loader"
+	"github.com/Azure/azure-functions-go-worker/logger"
+	"github.com/Azure/azure-functions-go-worker/rpc"
+	"github.com/Azure/azure-functions-go-worker/util"
 )
 
 // ExecuteFunc takes an InvocationRequest and executes the function with corresponding function ID

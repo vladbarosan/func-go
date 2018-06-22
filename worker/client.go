@@ -6,7 +6,7 @@ import (
 	"io"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/radu-matei/azure-functions-golang-worker/rpc"
+	"github.com/Azure/azure-functions-go-worker/rpc"
 	"google.golang.org/grpc"
 )
 

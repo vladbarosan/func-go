@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/radu-matei/azure-functions-golang-worker/azfunc"
+	"github.com/Azure/azure-functions-go-worker/azfunc"
 )
 
 // Run is the entrypoint to our Go Azure Function - if you want to change it, see function.json

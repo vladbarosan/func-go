@@ -9,8 +9,8 @@ import (
 	"reflect"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/radu-matei/azure-functions-golang-worker/azfunc"
-	"github.com/radu-matei/azure-functions-golang-worker/rpc"
+	"github.com/Azure/azure-functions-go-worker/azfunc"
+	"github.com/Azure/azure-functions-go-worker/rpc"
 )
 
 var (

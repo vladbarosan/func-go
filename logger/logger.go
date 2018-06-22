@@ -5,7 +5,7 @@ package logger
 import (
 	"fmt"
 
-	"github.com/radu-matei/azure-functions-golang-worker/rpc"
+	"github.com/Azure/azure-functions-go-worker/rpc"
 )
 
 // Logger exposes the functionality to send logs back to the runtime

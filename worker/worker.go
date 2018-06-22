@@ -2,9 +2,9 @@ package worker
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"github.com/radu-matei/azure-functions-golang-worker/executor"
-	"github.com/radu-matei/azure-functions-golang-worker/loader"
-	"github.com/radu-matei/azure-functions-golang-worker/rpc"
+	"github.com/Azure/azure-functions-go-worker/executor"
+	"github.com/Azure/azure-functions-go-worker/loader"
+	"github.com/Azure/azure-functions-go-worker/rpc"
 )
 
 func handleStreamingMessage(message *rpc.StreamingMessage, client *Client, eventStream rpc.FunctionRpc_EventStreamClient) {

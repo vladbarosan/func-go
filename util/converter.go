@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/radu-matei/azure-functions-golang-worker/azfunc"
-	"github.com/radu-matei/azure-functions-golang-worker/rpc"
+	"github.com/Azure/azure-functions-go-worker/azfunc"
+	"github.com/Azure/azure-functions-go-worker/rpc"
 )
 
 // ConvertToHTTPRequest returns a formatted HTTPRequest from an rpc.HttpTrigger

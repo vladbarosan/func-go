@@ -5,16 +5,17 @@ import (
 	"flag"
 	"fmt"
 
+	"github.com/Azure/azure-functions-go-worker/worker"
 	log "github.com/Sirupsen/logrus"
-	"github.com/radu-matei/azure-functions-golang-worker/worker"
 )
 
 var (
-	flagDebug bool
-	host      string
-	port      int
-	workerID  string
-	requestID string
+	flagDebug            bool
+	host                 string
+	port                 int
+	workerID             string
+	requestID            string
+	grpcMaxMessageLength int
 )
 
 func init() {
@@ -24,6 +25,7 @@ func init() {
 	flag.IntVar(&port, "port", 0, "RPC Server Port")
 	flag.StringVar(&workerID, "workerId", "", "RPC Server Worker ID")
 	flag.StringVar(&requestID, "requestId", "", "Request ID")
+	flag.IntVar(&grpcMaxMessageLength, "grpcMaxMessageLength", 134217728, "Max message length")
 
 	flag.Parse()
 
