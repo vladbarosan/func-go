@@ -1,10 +1,10 @@
 package worker
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"github.com/Azure/azure-functions-go-worker/executor"
 	"github.com/Azure/azure-functions-go-worker/loader"
 	"github.com/Azure/azure-functions-go-worker/rpc"
+	log "github.com/Sirupsen/logrus"
 )
 
 func handleStreamingMessage(message *rpc.StreamingMessage, client *Client, eventStream rpc.FunctionRpc_EventStreamClient) {
@@ -84,7 +84,7 @@ func handleInvocationRequest(requestID string,
 	client *Client,
 	eventStream rpc.FunctionRpc_EventStreamClient) {
 
-	//log.Debugf("received invocation request: %v", message.InvocationRequest)
+	log.Debugf("received invocation request: %v", message.InvocationRequest)
 	response := executor.ExecuteFunc(message.InvocationRequest, eventStream)
 
 	invocationResponse := &rpc.StreamingMessage{

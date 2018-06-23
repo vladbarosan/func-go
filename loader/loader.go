@@ -8,9 +8,9 @@ import (
 	"plugin"
 	"reflect"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/Azure/azure-functions-go-worker/azfunc"
 	"github.com/Azure/azure-functions-go-worker/rpc"
+	log "github.com/Sirupsen/logrus"
 )
 
 var (

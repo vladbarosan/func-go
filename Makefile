@@ -1,6 +1,5 @@
 plugins = grpc
-target = go
-protoc_location = rpc/
+protoc_location = rpc/protos/azure-functions
 proto_out_dir = rpc/
 
 GOLANG_WORKER_BINARY = golang-worker
@@ -8,7 +7,7 @@ SUBDIRS := $(wildcard sample/*)
 
 .PHONY: rpc
 rpc:
-        protoc -I $(protoc_location) --$(target)_out=plugins=$(plugins):$(proto_out_dir) $(protoc_location)/*.proto
+	protoc -I $(protoc_location) --go_out=plugins=$(plugins):$(proto_out_dir) $(protoc_location)/*.proto
 
 .PHONY: golang-worker
 golang-worker:

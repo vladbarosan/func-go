@@ -1,15 +1,15 @@
 [[constraint]]
   name = "github.com/Sirupsen/logrus"
-  version = "1.0.3"
+  version = "1.0.5"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/golang/protobuf"
-  
+  version = "1.1.0"
+
 [[constraint]]
   branch = "master"
   name = "golang.org/x/net"
 
 [[constraint]]
   name = "google.golang.org/grpc"
-  version = "1.7.1"
+  version = "1.13.0"

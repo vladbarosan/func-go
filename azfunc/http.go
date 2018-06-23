@@ -13,5 +13,4 @@ type HTTPRequest struct {
 	Params     map[string]string
 	StatusCode string
 	Query      map[string]string
-	IsRaw      bool
 }

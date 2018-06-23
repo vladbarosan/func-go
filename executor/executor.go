@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"reflect"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/Azure/azure-functions-go-worker/azfunc"
 	"github.com/Azure/azure-functions-go-worker/loader"
 	"github.com/Azure/azure-functions-go-worker/logger"
 	"github.com/Azure/azure-functions-go-worker/rpc"
 	"github.com/Azure/azure-functions-go-worker/util"
+	log "github.com/Sirupsen/logrus"
 )
 
 // ExecuteFunc takes an InvocationRequest and executes the function with corresponding function ID

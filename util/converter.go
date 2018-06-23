@@ -23,7 +23,6 @@ func ConvertToHTTPRequest(r *rpc.RpcHttp) (*azfunc.HTTPRequest, error) {
 		Params:     r.Params,
 		StatusCode: r.StatusCode,
 		Query:      r.Query,
-		IsRaw:      r.IsRaw,
 	}
 
 	if r.Body == nil {

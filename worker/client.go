@@ -5,46 +5,40 @@ import (
 	"fmt"
 	"io"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/Azure/azure-functions-go-worker/rpc"
+	log "github.com/Sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
 // ClientConfig contains all necessary configuration to connect to the Azure Functions Host
 type ClientConfig struct {
-	Host      string
-	Port      int
-	WorkerID  string
-	RequestID string
+	Host             string
+	Port             int
+	WorkerID         string
+	RequestID        string
+	MaxMessageLength int
 }
 
 // Client that listens for events from the Azure Functions host and executes Golang methods
 type Client struct {
-	Cfg *ClientConfig
-	RPC rpc.FunctionRpcClient
+	Cfg  *ClientConfig
+	conn *grpc.ClientConn
 }
 
 // NewClient returns a new instance of Client
-func NewClient(cfg *ClientConfig, conn *grpc.ClientConn) *Client {
-	log.Debugf("executing NewClient with config: host %s:%d, worker id %s, request id %s",
-		cfg.Host, cfg.Port, cfg.WorkerID, cfg.RequestID)
-
-	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithInsecure())
-
+func NewClient(cfg *ClientConfig) *Client {
 	return &Client{
 		Cfg: cfg,
-		RPC: rpc.NewFunctionRpcClient(conn),
 	}
 }
 
 // StartEventStream starts listening for messages from the Azure Functions Host
-func (client *Client) StartEventStream(ctx context.Context, opts ...grpc.CallOption) {
+func (client *Client) StartEventStream(ctx context.Context, opts ...grpc.CallOption) (err error) {
 	log.Debugf("starting event stream..")
-
-	eventStream, err := client.RPC.EventStream(ctx)
+	eventStream, err := rpc.NewFunctionRpcClient(client.conn).EventStream(ctx)
 	if err != nil {
 		log.Fatalf("cannot get event stream: %v", err)
+		return
 	}
 
 	waitc := make(chan struct{})
@@ -57,6 +51,7 @@ func (client *Client) StartEventStream(ctx context.Context, opts ...grpc.CallOpt
 			}
 			if err != nil {
 				log.Fatalf("error receiving stream: %v", err)
+				continue
 			}
 
 			handleStreamingMessage(message, client, eventStream)
@@ -72,19 +67,42 @@ func (client *Client) StartEventStream(ctx context.Context, opts ...grpc.CallOpt
 		},
 	}
 
-	if err := eventStream.Send(startStreamingMessage); err != nil {
+	if err = eventStream.Send(startStreamingMessage); err != nil {
 		log.Fatalf("failed to send start streaming request: %v", err)
+		return
 	}
 	log.Debugf("sent start streaming message to host")
 
 	<-waitc
+	return
+}
 
+// Connect tries to establish a grpc connection with the server
+func (client *Client) Connect(opts ...grpc.DialOption) (err error) {
+	log.Debugf("attempting to start grpc connection to server %s:%d with worker id %s and request id %s", client.Cfg.Host, client.Cfg.Port, client.Cfg.WorkerID, client.Cfg.RequestID)
+	opts = append(opts, grpc.WithInsecure(), grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(client.Cfg.MaxMessageLength)))
+
+	conn, err := client.getGRPCConnection(opts)
+	if err != nil {
+		log.Fatalf("cannot create grpc connection: %v", err)
+		return
+	}
+
+	client.conn = conn
+	log.Debugf("started grpc connection...")
+	return
+}
+
+// Disconnect closes the connection to the server
+func (client *Client) Disconnect() error {
+	return client.conn.Close()
 }
 
 //GetGRPCConnection returns a new grpc connection
-func GetGRPCConnection(host string) (conn *grpc.ClientConn, err error) {
+func (client *Client) getGRPCConnection(opts []grpc.DialOption) (conn *grpc.ClientConn, err error) {
+	host := fmt.Sprintf("%s:%d", client.Cfg.Host, client.Cfg.Port)
 	log.Debugf("trying to dial %s", host)
-	if conn, err = grpc.Dial(host, grpc.WithInsecure()); err != nil {
+	if conn, err = grpc.Dial(host, opts...); err != nil {
 		return nil, fmt.Errorf("failed to dial %q: %v", host, err)
 	}
 	return conn, nil

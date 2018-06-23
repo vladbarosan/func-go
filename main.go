@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
+	"math"
 
 	"github.com/Azure/azure-functions-go-worker/worker"
 	log "github.com/Sirupsen/logrus"
@@ -25,7 +25,7 @@ func init() {
 	flag.IntVar(&port, "port", 0, "RPC Server Port")
 	flag.StringVar(&workerID, "workerId", "", "RPC Server Worker ID")
 	flag.StringVar(&requestID, "requestId", "", "Request ID")
-	flag.IntVar(&grpcMaxMessageLength, "grpcMaxMessageLength", 134217728, "Max message length")
+	flag.IntVar(&grpcMaxMessageLength, "grpcMaxMessageLength", math.MaxInt32, "Max message length")
 
 	flag.Parse()
 
@@ -35,21 +35,20 @@ func init() {
 }
 
 func main() {
-	log.Debugf("attempting to start grpc connection to server %s:%d with worker id %s and request id %s", host, port, workerID, requestID)
+	cfg := &worker.ClientConfig{
+		Host:             host,
+		Port:             port,
+		WorkerID:         workerID,
+		RequestID:        requestID,
+		MaxMessageLength: grpcMaxMessageLength,
+	}
+	client := worker.NewClient(cfg)
+	err := client.Connect()
 
-	conn, err := worker.GetGRPCConnection(fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
 		log.Fatalf("cannot create grpc connection: %v", err)
 	}
-	defer conn.Close()
-	log.Debugf("started grpc connection...")
+	defer client.Disconnect()
 
-	cfg := &worker.ClientConfig{
-		Host:      host,
-		Port:      port,
-		WorkerID:  workerID,
-		RequestID: requestID,
-	}
-	client := worker.NewClient(cfg, conn)
 	client.StartEventStream(context.Background())
 }
