@@ -134,19 +134,20 @@ func getFinalParams(req *rpc.InvocationRequest, f *azfunc.Func, eventStream rpc.
 
 // TODO - add here cases for all bindings supported by Azure Functions
 func getValueFromBinding(input *rpc.ParameterBinding, binding *rpc.BindingInfo) (reflect.Value, error) {
-
-	switch binding.Type {
-	case azfunc.HTTPTriggerType:
+	switch azfunc.BindingType(binding.Type) {
+	case azfunc.HTTPTrigger:
 		switch r := input.Data.Data.(type) {
 		case *rpc.TypedData_Http:
-			h, err := util.ConvertToHTTPRequest(r.Http)
+			h, err := util.ConvertToNativeRequest(r.Http)
+			log.Debugf("Converted Http data: %v to: %v", r.Http, *h)
+
 			if err != nil {
 				return reflect.New(nil), err
 			}
 			return reflect.ValueOf(h), nil
 		}
 
-	case azfunc.BlobBindingType:
+	case azfunc.BlobBinding:
 		switch d := input.Data.Data.(type) {
 		case *rpc.TypedData_String_:
 			b, err := util.ConvertToBlobInput(d)
@@ -158,11 +159,12 @@ func getValueFromBinding(input *rpc.ParameterBinding, binding *rpc.BindingInfo) 
 		}
 	}
 	return reflect.New(nil), fmt.Errorf("cannot handle binding %v", binding.Type)
+
 }
 
 func getOutBinding(b *rpc.BindingInfo) (reflect.Value, error) {
-	switch b.Type {
-	case azfunc.BlobBindingType:
+	switch azfunc.BindingType(b.Type) {
+	case azfunc.BlobBinding:
 		b := &azfunc.Blob{
 			Data: "",
 		}
