@@ -8,6 +8,7 @@ import (
 )
 
 func handleStreamingMessage(message *rpc.StreamingMessage, client *Client, eventStream rpc.FunctionRpc_EventStreamClient) {
+	log.Debugf("received message: %v", message)
 	switch m := message.Content.(type) {
 
 	case *rpc.StreamingMessage_WorkerInitRequest:

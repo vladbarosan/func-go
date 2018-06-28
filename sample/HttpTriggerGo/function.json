@@ -1,5 +1,4 @@
 {
-    "scriptFile": "main.go",
     "entryPoint" : "Run",
     "bindings": [
       {
