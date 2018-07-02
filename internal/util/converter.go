@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/Azure/azure-functions-go-worker/azfunc"
-	"github.com/Azure/azure-functions-go-worker/rpc"
+	"github.com/Azure/azure-functions-go-worker/azure"
+	"github.com/Azure/azure-functions-go-worker/internal/rpc"
 )
 
 // ConvertToNativeRequest returns a native http.Request from an rpc.HttpTrigger
@@ -39,12 +39,12 @@ func ConvertToNativeRequest(r *rpc.RpcHttp) (*http.Request, error) {
 }
 
 // ConvertToBlobInput returns a formatted BlobInput from an rpc.TypedData_String (as blob inputs are for now)
-func ConvertToBlobInput(d *rpc.TypedData_String_) (*azfunc.Blob, error) {
+func ConvertToBlobInput(d *rpc.TypedData_String_) (*azure.Blob, error) {
 	if d == nil {
 		return nil, fmt.Errorf("cannot convert nil blob input")
 	}
 
-	return &azfunc.Blob{
+	return &azure.Blob{
 		Data: d.String_,
 	}, nil
 }

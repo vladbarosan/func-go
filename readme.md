@@ -24,12 +24,13 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 
-	"github.com/Azure/azure-functions-go-worker/azfunc"
+	"github.com/Azure/azure-functions-go-worker/azure"
 )
 
 // Run is the entrypoint to our Go Azure Function - if you want to change it, see function.json
-func Run(req *azfunc.HTTPRequest, ctx *azfunc.Context) User {
+func Run(req *http.Request, ctx *azure.Context) User {
 	ctx.Logger.Log("Log message from function %v, invocation %v to the runtime", ctx.FunctionID, ctx.InvocationID)
 
 	u := User{
@@ -45,14 +46,13 @@ type User struct {
 	Name          string
 	GeneratedName string
 }
-
 ```
 
 Things to notice:
 
 - we can use any vendored dependencies we might have available at compile time (everything is packaged as a Golang plugin)
 - the name of the function is `Run` - can be changed, just remember to do the same in `function.json`
-- the function signature - `func Run(req *azfunc.HTTPRequest, ctx *azfunc.Context) User`. Based on the `function.json` file, `req`, `User`, `outBlob` and `ctx` are automatically populated by the worker.
+- the function signature - `func Run(req *http.Request, ctx *azure.Context) User`. Based on the `function.json` file, `req`, `User`, `outBlob` and `ctx` are automatically populated by the worker.
 
   > **The content of the parameters is populated based on the name of the parameter! You can change the order, but the name has to be consistent with the name of the binding defined in `function.json`!**
 

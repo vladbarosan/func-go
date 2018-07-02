@@ -1,9 +1,9 @@
 package worker
 
 import (
-	"github.com/Azure/azure-functions-go-worker/executor"
-	"github.com/Azure/azure-functions-go-worker/loader"
-	"github.com/Azure/azure-functions-go-worker/rpc"
+	"github.com/Azure/azure-functions-go-worker/internal/executor"
+	"github.com/Azure/azure-functions-go-worker/internal/registry"
+	"github.com/Azure/azure-functions-go-worker/internal/rpc"
 	log "github.com/Sirupsen/logrus"
 )
 
@@ -56,7 +56,7 @@ func handleFunctionLoadRequest(requestID string,
 	eventStream rpc.FunctionRpc_EventStreamClient) {
 
 	status := rpc.StatusResult_Success
-	err := loader.LoadFunc(message.FunctionLoadRequest)
+	err := registry.LoadFunc(message.FunctionLoadRequest)
 	if err != nil {
 		status = rpc.StatusResult_Failure
 		log.Debugf("could not load function: %v", err)

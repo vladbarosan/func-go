@@ -1,4 +1,4 @@
-package azfunc
+package azure
 
 import (
 	"time"
@@ -55,5 +55,6 @@ type Sys struct {
 
 // Blob contains the data from a blob as string
 type Blob struct {
+	Name string
 	Data string
 }

@@ -1,11 +1,11 @@
-package azfunc
+package azure
 
 import (
 	"net/http"
 	"reflect"
 
-	"github.com/Azure/azure-functions-go-worker/logger"
-	"github.com/Azure/azure-functions-go-worker/rpc"
+	"github.com/Azure/azure-functions-go-worker/internal/logger"
+	"github.com/Azure/azure-functions-go-worker/internal/rpc"
 )
 
 // TriggerType represents the supported trigger types.
@@ -28,12 +28,12 @@ const (
 	BlobBinding BindingType = "blob"
 )
 
-// StringToType - Because we don't have go/types information, we need to map the type info from the AST (which is string) to the actual types - see loader.go:83
-// investiage automatically adding here all types from package azfunc
+// StringToType - Because we don't have go/types information, we need to map the type info from the AST (which is string) to the actual types - see registry.go:83
+// investiage automatically adding here all types from package azure
 var StringToType = map[string]reflect.Type{
-	"*http.Request":   reflect.TypeOf((*http.Request)(nil)),
-	"*azfunc.Context": reflect.TypeOf((*Context)(nil)),
-	"*azfunc.Blob":    reflect.TypeOf((*Blob)(nil)),
+	"*http.Request":  reflect.TypeOf((*http.Request)(nil)),
+	"*azure.Context": reflect.TypeOf((*Context)(nil)),
+	"*azure.Blob":    reflect.TypeOf((*Blob)(nil)),
 }
 
 // Func contains a function symbol with in and out param types

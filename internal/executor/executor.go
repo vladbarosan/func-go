@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/Azure/azure-functions-go-worker/azfunc"
-	"github.com/Azure/azure-functions-go-worker/loader"
-	"github.com/Azure/azure-functions-go-worker/logger"
-	"github.com/Azure/azure-functions-go-worker/rpc"
-	"github.com/Azure/azure-functions-go-worker/util"
+	"github.com/Azure/azure-functions-go-worker/azure"
+	"github.com/Azure/azure-functions-go-worker/internal/logger"
+	"github.com/Azure/azure-functions-go-worker/internal/registry"
+	"github.com/Azure/azure-functions-go-worker/internal/rpc"
+	"github.com/Azure/azure-functions-go-worker/internal/util"
 	log "github.com/Sirupsen/logrus"
 )
 
@@ -20,7 +20,7 @@ func ExecuteFunc(req *rpc.InvocationRequest, eventStream rpc.FunctionRpc_EventSt
 
 	status := rpc.StatusResult_Success
 
-	f, ok := loader.LoadedFuncs[req.FunctionId]
+	f, ok := registry.Funcs[req.FunctionId]
 	if !ok {
 		log.Debugf("function with functionID %v not loaded", req.FunctionId)
 		status = rpc.StatusResult_Failure
@@ -74,7 +74,7 @@ func ExecuteFunc(req *rpc.InvocationRequest, eventStream rpc.FunctionRpc_EventSt
 	}
 }
 
-func getFinalParams(req *rpc.InvocationRequest, f *azfunc.Func, eventStream rpc.FunctionRpc_EventStreamClient) ([]reflect.Value, map[string]reflect.Value, error) {
+func getFinalParams(req *rpc.InvocationRequest, f *azure.Func, eventStream rpc.FunctionRpc_EventStreamClient) ([]reflect.Value, map[string]reflect.Value, error) {
 	args := make(map[string]reflect.Value)
 	outBindings := make(map[string]reflect.Value)
 
@@ -94,7 +94,7 @@ func getFinalParams(req *rpc.InvocationRequest, f *azfunc.Func, eventStream rpc.
 		}
 	}
 
-	ctx := &azfunc.Context{
+	ctx := &azure.Context{
 		FunctionID:   req.FunctionId,
 		InvocationID: req.InvocationId,
 		Logger:       logger.NewLogger(eventStream, req.InvocationId),
@@ -109,7 +109,7 @@ func getFinalParams(req *rpc.InvocationRequest, f *azfunc.Func, eventStream rpc.
 		if ok {
 			params[i] = p
 			i++
-		} else if v.Type == reflect.TypeOf((*azfunc.Context)(nil)) {
+		} else if v.Type == reflect.TypeOf((*azure.Context)(nil)) {
 			params[i] = reflect.ValueOf(ctx)
 			i++
 		} else {
@@ -134,8 +134,8 @@ func getFinalParams(req *rpc.InvocationRequest, f *azfunc.Func, eventStream rpc.
 
 // TODO - add here cases for all bindings supported by Azure Functions
 func getValueFromBinding(input *rpc.ParameterBinding, binding *rpc.BindingInfo) (reflect.Value, error) {
-	switch azfunc.BindingType(binding.Type) {
-	case azfunc.HTTPTrigger:
+	switch azure.BindingType(binding.Type) {
+	case azure.HTTPTrigger:
 		switch r := input.Data.Data.(type) {
 		case *rpc.TypedData_Http:
 			h, err := util.ConvertToNativeRequest(r.Http)
@@ -147,7 +147,7 @@ func getValueFromBinding(input *rpc.ParameterBinding, binding *rpc.BindingInfo) 
 			return reflect.ValueOf(h), nil
 		}
 
-	case azfunc.BlobBinding:
+	case azure.BlobBinding:
 		switch d := input.Data.Data.(type) {
 		case *rpc.TypedData_String_:
 			b, err := util.ConvertToBlobInput(d)
@@ -163,9 +163,9 @@ func getValueFromBinding(input *rpc.ParameterBinding, binding *rpc.BindingInfo) 
 }
 
 func getOutBinding(b *rpc.BindingInfo) (reflect.Value, error) {
-	switch azfunc.BindingType(b.Type) {
-	case azfunc.BlobBinding:
-		b := &azfunc.Blob{
+	switch azure.BindingType(b.Type) {
+	case azure.BlobBinding:
+		b := &azure.Blob{
 			Data: "",
 		}
 		return reflect.ValueOf(b), nil

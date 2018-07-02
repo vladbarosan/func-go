@@ -1,4 +1,4 @@
-package loader
+package registry
 
 import (
 	"fmt"
@@ -8,21 +8,21 @@ import (
 	"plugin"
 	"reflect"
 
-	"github.com/Azure/azure-functions-go-worker/azfunc"
-	"github.com/Azure/azure-functions-go-worker/rpc"
+	"github.com/Azure/azure-functions-go-worker/azure"
+	"github.com/Azure/azure-functions-go-worker/internal/rpc"
 	log "github.com/Sirupsen/logrus"
 )
 
 var (
-	// LoadedFuncs contains function id and all information the loader gets from compiled plugin and source code
-	LoadedFuncs = make(map[string]*azfunc.Func)
+	// Funcs contains function id and all information the registry gets from compiled plugin and source code
+	Funcs = make(map[string]*azure.Func)
 )
 
 // LoadFunc populates information about the func from the compiled plugin and from parsing the source code
 func LoadFunc(req *rpc.FunctionLoadRequest) error {
 	log.Debugf("received function load request: %v", req)
 
-	f, err := loadSO(req.Metadata)
+	f, err := loadFuncFromPlugin(req.Metadata)
 	if err != nil {
 		return fmt.Errorf("cannot load function from plugin: %v", err)
 	}
@@ -36,14 +36,14 @@ func LoadFunc(req *rpc.FunctionLoadRequest) error {
 	f.NamedInArgs = namedIn
 
 	log.Debugf("function: %v", f)
-	LoadedFuncs[req.FunctionId] = f
+	Funcs[req.FunctionId] = f
 
 	return nil
 }
 
-// loadSO takes the compiled plugin from the func's bin directory
+// loadFuncFromPlugin takes the compiled plugin from the func's bin directory
 // then reads through reflection the in and out paramns of the entrypoint
-func loadSO(metadata *rpc.RpcFunctionMetadata) (*azfunc.Func, error) {
+func loadFuncFromPlugin(metadata *rpc.RpcFunctionMetadata) (*azure.Func, error) {
 
 	path := fmt.Sprintf("%s/bin/%s.so", metadata.Directory, metadata.Name)
 	plugin, err := plugin.Open(path)
@@ -71,7 +71,7 @@ func loadSO(metadata *rpc.RpcFunctionMetadata) (*azfunc.Func, error) {
 		out[i] = t.Out(i)
 	}
 
-	return &azfunc.Func{
+	return &azure.Func{
 		Func: reflect.ValueOf(symbol),
 		In:   in,
 		Out:  out,
@@ -80,8 +80,8 @@ func loadSO(metadata *rpc.RpcFunctionMetadata) (*azfunc.Func, error) {
 
 // can this be optimized?
 // can this be achieved only by relying on the parameter order?
-func parseEntrypoint(metadata *rpc.RpcFunctionMetadata) ([]*azfunc.Arg, error) {
-	var namedInArgs []*azfunc.Arg
+func parseEntrypoint(metadata *rpc.RpcFunctionMetadata) ([]*azure.Arg, error) {
+	var namedInArgs []*azure.Arg
 
 	fs := token.NewFileSet()
 	f, err := parser.ParseFile(fs, metadata.ScriptFile, nil, parser.AllErrors)
@@ -110,9 +110,9 @@ func parseEntrypoint(metadata *rpc.RpcFunctionMetadata) ([]*azfunc.Arg, error) {
 					// TODO - can any of the values here be nil?
 					// TODO - handle cases when in user func there is no pointer type
 					key := fmt.Sprintf("*%v.%v", p.Type.(*ast.StarExpr).X.(*ast.SelectorExpr).X.(*ast.Ident).Name, p.Type.(*ast.StarExpr).X.(*ast.SelectorExpr).Sel.Name)
-					t, ok := azfunc.StringToType[key]
+					t, ok := azure.StringToType[key]
 					if ok {
-						namedInArgs = append(namedInArgs, &azfunc.Arg{
+						namedInArgs = append(namedInArgs, &azure.Arg{
 							Name: n.Name,
 							Type: t,
 						})

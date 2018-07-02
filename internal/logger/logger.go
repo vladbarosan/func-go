@@ -1,11 +1,11 @@
 package logger
 
-// separate package in order to have private eventStream not visible from azfunc
+// separate package in order to have private eventStream not visible from azure package
 
 import (
 	"fmt"
 
-	"github.com/Azure/azure-functions-go-worker/rpc"
+	"github.com/Azure/azure-functions-go-worker/internal/rpc"
 )
 
 // Logger exposes the functionality to send logs back to the runtime

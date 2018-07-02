@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/Azure/azure-functions-go-worker/rpc"
+	"github.com/Azure/azure-functions-go-worker/internal/rpc"
 	log "github.com/Sirupsen/logrus"
 	"google.golang.org/grpc"
 )
