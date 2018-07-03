@@ -33,12 +33,12 @@ func NewClient(cfg *ClientConfig) *Client {
 }
 
 // StartEventStream starts listening for messages from the Azure Functions Host
-func (client *Client) StartEventStream(ctx context.Context, opts ...grpc.CallOption) (err error) {
+func (client *Client) StartEventStream(ctx context.Context, opts ...grpc.CallOption) error {
 	log.Debugf("starting event stream..")
 	eventStream, err := rpc.NewFunctionRpcClient(client.conn).EventStream(ctx)
 	if err != nil {
 		log.Fatalf("cannot get event stream: %v", err)
-		return
+		return err
 	}
 
 	waitc := make(chan struct{})
@@ -54,7 +54,7 @@ func (client *Client) StartEventStream(ctx context.Context, opts ...grpc.CallOpt
 				continue
 			}
 
-			handleStreamingMessage(message, client, eventStream)
+			go handleStreamingMessage(message, client, eventStream)
 		}
 	}()
 
@@ -69,12 +69,12 @@ func (client *Client) StartEventStream(ctx context.Context, opts ...grpc.CallOpt
 
 	if err = eventStream.Send(startStreamingMessage); err != nil {
 		log.Fatalf("failed to send start streaming request: %v", err)
-		return
+		return err
 	}
 	log.Debugf("sent start streaming message to host")
 
 	<-waitc
-	return
+	return nil
 }
 
 // Connect tries to establish a grpc connection with the server

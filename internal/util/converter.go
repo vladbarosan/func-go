@@ -2,6 +2,7 @@ package util
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -47,4 +48,18 @@ func ConvertToBlobInput(d *rpc.TypedData_String_) (*azure.Blob, error) {
 	return &azure.Blob{
 		Data: d.String_,
 	}, nil
+}
+
+//ConvertToTimerInput returns a formatted TimerInput from an rpc.
+func ConvertToTimerInput(d *rpc.TypedData_Json) (*azure.Timer, error) {
+	if d == nil {
+		return nil, fmt.Errorf("cannot convert nil timer input")
+	}
+
+	timer := azure.Timer{}
+	if err := json.Unmarshal([]byte(d.Json), &timer); err != nil {
+		return nil, fmt.Errorf("cannot unmarshal timer object")
+	}
+
+	return &timer, nil
 }

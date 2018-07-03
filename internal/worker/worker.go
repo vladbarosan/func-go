@@ -85,7 +85,6 @@ func handleInvocationRequest(requestID string,
 	client *Client,
 	eventStream rpc.FunctionRpc_EventStreamClient) {
 
-	log.Debugf("received invocation request: %v", message.InvocationRequest)
 	response := executor.ExecuteFunc(message.InvocationRequest, eventStream)
 
 	invocationResponse := &rpc.StreamingMessage{
@@ -95,5 +94,7 @@ func handleInvocationRequest(requestID string,
 		},
 	}
 
-	eventStream.Send(invocationResponse)
+	if err := eventStream.Send(invocationResponse); err != nil {
+		log.Fatalf("failed to send function invocation response: %v", err)
+	}
 }

@@ -21,11 +21,23 @@ const (
 	// BlobTrigger represents a blob trigger in function load request from host
 	BlobTrigger BindingType = "blobTrigger"
 
+	// QueueTrigger represents a queue trigger in function load request from host
+	QueueTrigger BindingType = "queueTrigger"
+
+	// TimerTrigger represents a queue trigger in function load request from host
+	TimerTrigger BindingType = "timerTrigger"
+
+	// EventGridTrigger represents a queue trigger in function load request from host
+	EventGridTrigger BindingType = "eventGridTrigger"
+
 	// HTTPBinding represents a HTTP binding in function load request from the host
 	HTTPBinding BindingType = "http"
 
 	// BlobBinding represents a blob binding in function load request from the host
 	BlobBinding BindingType = "blob"
+
+	// QueueBinding represents a queue binding in function load request from the host
+	QueueBinding BindingType = "queue"
 )
 
 // StringToType - Because we don't have go/types information, we need to map the type info from the AST (which is string) to the actual types - see registry.go:83
@@ -34,6 +46,7 @@ var StringToType = map[string]reflect.Type{
 	"*http.Request":  reflect.TypeOf((*http.Request)(nil)),
 	"*azure.Context": reflect.TypeOf((*Context)(nil)),
 	"*azure.Blob":    reflect.TypeOf((*Blob)(nil)),
+	"*azure.Timer":   reflect.TypeOf((*Timer)(nil)),
 }
 
 // Func contains a function symbol with in and out param types
@@ -57,4 +70,8 @@ type Context struct {
 type Arg struct {
 	Name string
 	Type reflect.Type
+}
+
+type Timer struct {
+	PastDue bool `json:"IsPastDue"`
 }

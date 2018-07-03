@@ -29,7 +29,7 @@ func LoadFunc(req *rpc.FunctionLoadRequest) error {
 
 	namedIn, err := parseEntrypoint(req.Metadata)
 	if err != nil {
-		return fmt.Errorf("canoot parse entrypoint: %v", err)
+		return fmt.Errorf("cannot parse entrypoint: %v", err)
 	}
 
 	f.Bindings = req.Metadata.Bindings
@@ -78,8 +78,6 @@ func loadFuncFromPlugin(metadata *rpc.RpcFunctionMetadata) (*azure.Func, error) 
 	}, nil
 }
 
-// can this be optimized?
-// can this be achieved only by relying on the parameter order?
 func parseEntrypoint(metadata *rpc.RpcFunctionMetadata) ([]*azure.Arg, error) {
 	var namedInArgs []*azure.Arg
 
@@ -91,10 +89,6 @@ func parseEntrypoint(metadata *rpc.RpcFunctionMetadata) ([]*azure.Arg, error) {
 
 	// traverse the AST and inspect the nodes
 	// if the node is a func declaration, check if entrypoint and get input params names and types (as string)
-	//
-	// since this will be statically compiled, there is no information for go/types to work
-	// if includeded the entire SDK (or buildmode=shared -linkshared - which is experimental)
-	// could do this - https://github.com/radu-matei/golang-ast/blob/master/main.go#L32
 	ast.Inspect(f, func(n ast.Node) bool {
 		switch x := n.(type) {
 		case *ast.FuncDecl:

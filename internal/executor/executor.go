@@ -34,12 +34,7 @@ func ExecuteFunc(req *rpc.InvocationRequest, eventStream rpc.FunctionRpc_EventSt
 	log.Debugf("params: %v", params)
 	log.Debugf("out bindings: %v", outBindings)
 
-	output := f.Func.Call(params)[0]
-
-	b, err := json.Marshal(output.Interface())
-	if err != nil {
-		log.Debugf("failed to marshal, %v:", err)
-	}
+	output := f.Func.Call(params)
 
 	outputData := make([]*rpc.ParameterBinding, len(outBindings))
 	i := 0
@@ -60,6 +55,15 @@ func ExecuteFunc(req *rpc.InvocationRequest, eventStream rpc.FunctionRpc_EventSt
 		}
 	}
 
+	r := ""
+	if len(output) > 0 {
+		b, err := json.Marshal(output[0].Interface())
+		r = string(b)
+		if err != nil {
+			log.Debugf("failed to marshal, %v:", err)
+		}
+	}
+
 	return &rpc.InvocationResponse{
 		InvocationId: req.InvocationId,
 		Result: &rpc.StatusResult{
@@ -67,7 +71,7 @@ func ExecuteFunc(req *rpc.InvocationRequest, eventStream rpc.FunctionRpc_EventSt
 		},
 		ReturnValue: &rpc.TypedData{
 			Data: &rpc.TypedData_Json{
-				Json: string(b),
+				Json: r,
 			},
 		},
 		OutputData: outputData,
@@ -145,6 +149,19 @@ func getValueFromBinding(input *rpc.ParameterBinding, binding *rpc.BindingInfo) 
 				return reflect.New(nil), err
 			}
 			return reflect.ValueOf(h), nil
+		}
+
+	case azure.TimerTrigger:
+		switch d := input.Data.Data.(type) {
+		case *rpc.TypedData_Json:
+			t, err := util.ConvertToTimerInput(d)
+			log.Debugf("Converted timer data: %v to: %v", d, *t)
+
+			if err != nil {
+				return reflect.New(nil), err
+			}
+
+			return reflect.ValueOf(t), nil
 		}
 
 	case azure.BlobBinding:
