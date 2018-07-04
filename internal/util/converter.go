@@ -63,3 +63,16 @@ func ConvertToTimerInput(d *rpc.TypedData_Json) (*azure.Timer, error) {
 
 	return &timer, nil
 }
+
+func ConvertToEventGridEvent(d *rpc.TypedData_Json) (*azure.EventGridEvent, error) {
+	if d == nil {
+		return nil, fmt.Errorf("cannot convert nil event grid event input")
+	}
+
+	eventGridEvent := azure.EventGridEvent{}
+	if err := json.Unmarshal([]byte(d.Json), &eventGridEvent); err != nil {
+		return nil, fmt.Errorf("cannot unmarshal timer object")
+	}
+
+	return &eventGridEvent, nil
+}

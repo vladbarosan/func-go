@@ -4,7 +4,7 @@ ARG HOST_TAG=2.0
 ARG MODE="dev"
 
 #start from golang 1.10 (as multiple plugins with same package name fails in golang-1.9.x)
-FROM golang:1.9 as golang-env
+FROM golang:1.10 as golang-env
 
 WORKDIR /go/src/github.com/Azure/azure-functions-go-worker
 COPY . .

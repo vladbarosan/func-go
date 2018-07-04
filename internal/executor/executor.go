@@ -164,6 +164,19 @@ func getValueFromBinding(input *rpc.ParameterBinding, binding *rpc.BindingInfo) 
 			return reflect.ValueOf(t), nil
 		}
 
+	case azure.EventGridTrigger:
+		switch d := input.Data.Data.(type) {
+		case *rpc.TypedData_Json:
+			t, err := util.ConvertToEventGridEvent(d)
+			log.Debugf("Converted event grid trigger: %v to: %v", d, *t)
+
+			if err != nil {
+				return reflect.New(nil), err
+			}
+
+			return reflect.ValueOf(t), nil
+		}
+
 	case azure.BlobBinding:
 		switch d := input.Data.Data.(type) {
 		case *rpc.TypedData_String_:
@@ -187,6 +200,11 @@ func getOutBinding(b *rpc.BindingInfo) (reflect.Value, error) {
 		}
 		return reflect.ValueOf(b), nil
 
+	case azure.QueueBinding:
+		b := &azure.Queue{
+			Data: "",
+		}
+		return reflect.ValueOf(b), nil
 	default:
 		return reflect.New(nil), fmt.Errorf("cannot handle binding %v", b.Type)
 	}

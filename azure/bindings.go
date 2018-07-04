@@ -43,10 +43,12 @@ const (
 // StringToType - Because we don't have go/types information, we need to map the type info from the AST (which is string) to the actual types - see registry.go:83
 // investiage automatically adding here all types from package azure
 var StringToType = map[string]reflect.Type{
-	"*http.Request":  reflect.TypeOf((*http.Request)(nil)),
-	"*azure.Context": reflect.TypeOf((*Context)(nil)),
-	"*azure.Blob":    reflect.TypeOf((*Blob)(nil)),
-	"*azure.Timer":   reflect.TypeOf((*Timer)(nil)),
+	"*http.Request":         reflect.TypeOf((*http.Request)(nil)),
+	"*azure.Context":        reflect.TypeOf((*Context)(nil)),
+	"*azure.Blob":           reflect.TypeOf((*Blob)(nil)),
+	"*azure.Timer":          reflect.TypeOf((*Timer)(nil)),
+	"*azure.Queue":          reflect.TypeOf((*Queue)(nil)),
+	"*azure.EventGridEvent": reflect.TypeOf((*EventGridEvent)(nil)),
 }
 
 // Func contains a function symbol with in and out param types
@@ -74,4 +76,9 @@ type Arg struct {
 
 type Timer struct {
 	PastDue bool `json:"IsPastDue"`
+}
+
+type Queue struct {
+	Name string
+	Data string
 }
