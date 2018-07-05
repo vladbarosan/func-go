@@ -136,7 +136,6 @@ func getFinalParams(req *rpc.InvocationRequest, f *azure.Func, eventStream rpc.F
 	return params, outBindings, nil
 }
 
-// TODO - add here cases for all bindings supported by Azure Functions
 func getValueFromBinding(input *rpc.ParameterBinding, binding *rpc.BindingInfo) (reflect.Value, error) {
 	switch azure.BindingType(binding.Type) {
 	case azure.HTTPTrigger:
@@ -154,7 +153,7 @@ func getValueFromBinding(input *rpc.ParameterBinding, binding *rpc.BindingInfo) 
 	case azure.TimerTrigger:
 		switch d := input.Data.Data.(type) {
 		case *rpc.TypedData_Json:
-			t, err := util.ConvertToTimerInput(d)
+			t, err := util.ConvertToTimer(d)
 			log.Debugf("Converted timer data: %v to: %v", d, *t)
 
 			if err != nil {
@@ -177,15 +176,29 @@ func getValueFromBinding(input *rpc.ParameterBinding, binding *rpc.BindingInfo) 
 			return reflect.ValueOf(t), nil
 		}
 
+	case azure.BlobTrigger:
+		fallthrough
 	case azure.BlobBinding:
 		switch d := input.Data.Data.(type) {
 		case *rpc.TypedData_String_:
-			b, err := util.ConvertToBlobInput(d)
+			b, err := util.ConvertToBlob(d)
+			log.Debugf("Converted blob binding: %v to: %v", d, b)
 			if err != nil {
 				return reflect.New(nil), err
 			}
 
 			return reflect.ValueOf(b), nil
+		}
+	case azure.QueueTrigger:
+		switch d := input.Data.Data.(type) {
+		case *rpc.TypedData_String_:
+			qm, err := util.ConvertToQueueMsg(d)
+			log.Debugf("Converted table binding: %v to: %v", d, qm)
+			if err != nil {
+				return reflect.New(nil), err
+			}
+
+			return reflect.ValueOf(qm), nil
 		}
 	case azure.TableBinding:
 		switch d := input.Data.Data.(type) {
@@ -213,7 +226,7 @@ func getOutBinding(b *rpc.BindingInfo) (reflect.Value, error) {
 		return reflect.ValueOf(b), nil
 
 	case azure.QueueBinding:
-		b := &azure.Queue{
+		b := &azure.QueueMsg{
 			Data: "",
 		}
 		return reflect.ValueOf(b), nil

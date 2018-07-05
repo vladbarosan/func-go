@@ -1,0 +1,13 @@
+{
+  "entryPoint": "Run",
+  "bindings": [
+    {
+      "name": "in",
+      "type": "blobTrigger",
+      "direction": "in",
+      "path": "demo/{name}",
+      "connection": "AzureWebJobsStorage"
+    }
+  ],
+  "disabled": false
+}

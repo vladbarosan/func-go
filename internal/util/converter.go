@@ -39,8 +39,8 @@ func ConvertToNativeRequest(r *rpc.RpcHttp) (*http.Request, error) {
 	return req, nil
 }
 
-// ConvertToBlobInput returns a formatted BlobInput from an rpc.TypedData_String (as blob inputs are for now)
-func ConvertToBlobInput(d *rpc.TypedData_String_) (*azure.Blob, error) {
+// ConvertToBlob returns a formatted Blob from an rpc.TypedData_String (as blob inputs are for now)
+func ConvertToBlob(d *rpc.TypedData_String_) (*azure.Blob, error) {
 	if d == nil {
 		return nil, fmt.Errorf("cannot convert nil blob input")
 	}
@@ -50,8 +50,19 @@ func ConvertToBlobInput(d *rpc.TypedData_String_) (*azure.Blob, error) {
 	}, nil
 }
 
-//ConvertToTimerInput returns a formatted TimerInput from an rpc.
-func ConvertToTimerInput(d *rpc.TypedData_Json) (*azure.Timer, error) {
+// ConvertToQueueMsg returns a formatted Queue from an rpc.TypedData_String
+func ConvertToQueueMsg(d *rpc.TypedData_String_) (*azure.QueueMsg, error) {
+	if d == nil {
+		return nil, fmt.Errorf("cannot convert nil blob input")
+	}
+
+	return &azure.QueueMsg{
+		Data: d.String_,
+	}, nil
+}
+
+//ConvertToTimer returns a formatted TimerInput from an rpc.
+func ConvertToTimer(d *rpc.TypedData_Json) (*azure.Timer, error) {
 	if d == nil {
 		return nil, fmt.Errorf("cannot convert nil timer input")
 	}

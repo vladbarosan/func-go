@@ -48,7 +48,7 @@ var StringToType = map[string]reflect.Type{
 	"*azure.Context":         reflect.TypeOf((*Context)(nil)),
 	"*azure.Blob":            reflect.TypeOf((*Blob)(nil)),
 	"*azure.Timer":           reflect.TypeOf((*Timer)(nil)),
-	"*azure.Queue":           reflect.TypeOf((*Queue)(nil)),
+	"*azure.QueueMsg":        reflect.TypeOf((*QueueMsg)(nil)),
 	"*azure.EventGridEvent":  reflect.TypeOf((*EventGridEvent)(nil)),
 	"map[string]interface{}": reflect.TypeOf(reflect.TypeOf((map[string]interface{})(nil))),
 }
@@ -80,7 +80,11 @@ type Timer struct {
 	PastDue bool `json:"IsPastDue"`
 }
 
-type Queue struct {
-	Name string
-	Data string
+type QueueMsg struct {
+	ID              string
+	Data            string
+	DequeueCount    int
+	InsertionTime   string
+	ExpirationTime  string
+	NextVisibleTime string
 }
