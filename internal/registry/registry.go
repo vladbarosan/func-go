@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"go/types"
 	"plugin"
 	"reflect"
 
@@ -101,9 +102,9 @@ func parseEntrypoint(metadata *rpc.RpcFunctionMetadata) ([]*azure.Arg, error) {
 			}
 			for _, p := range x.Type.Params.List {
 				for _, n := range p.Names {
-					// TODO - can any of the values here be nil?
-					// TODO - handle cases when in user func there is no pointer type
-					key := fmt.Sprintf("*%v.%v", p.Type.(*ast.StarExpr).X.(*ast.SelectorExpr).X.(*ast.Ident).Name, p.Type.(*ast.StarExpr).X.(*ast.SelectorExpr).Sel.Name)
+					key := types.ExprString(p.Type)
+					log.Debugf("Found parameter: %v with type: %v and string expr: %s", n, p.Type, key)
+
 					t, ok := azure.StringToType[key]
 					if ok {
 						namedInArgs = append(namedInArgs, &azure.Arg{

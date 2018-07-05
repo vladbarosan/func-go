@@ -187,9 +187,21 @@ func getValueFromBinding(input *rpc.ParameterBinding, binding *rpc.BindingInfo) 
 
 			return reflect.ValueOf(b), nil
 		}
-	}
-	return reflect.New(nil), fmt.Errorf("cannot handle binding %v", binding.Type)
+	case azure.TableBinding:
+		switch d := input.Data.Data.(type) {
+		case *rpc.TypedData_Json:
+			m, err := util.ConvertToMap(d)
+			log.Debugf("Converted table binding: %v to: %v", d, m)
 
+			if err != nil {
+				return reflect.New(nil), err
+			}
+
+			return reflect.ValueOf(m), nil
+		}
+	}
+
+	return reflect.New(nil), fmt.Errorf("cannot handle binding %v", binding.Type)
 }
 
 func getOutBinding(b *rpc.BindingInfo) (reflect.Value, error) {
@@ -204,6 +216,9 @@ func getOutBinding(b *rpc.BindingInfo) (reflect.Value, error) {
 		b := &azure.Queue{
 			Data: "",
 		}
+		return reflect.ValueOf(b), nil
+	case azure.TableBinding:
+		b := map[string]interface{}{}
 		return reflect.ValueOf(b), nil
 	default:
 		return reflect.New(nil), fmt.Errorf("cannot handle binding %v", b.Type)

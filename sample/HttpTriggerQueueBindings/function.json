@@ -1,0 +1,19 @@
+{
+  "entryPoint": "Run",
+  "bindings": [
+    {
+      "authLevel": "anonymous",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req"
+    },
+    {
+      "name": "outQueue",
+      "type": "queue",
+      "direction": "out",
+      "queueName": "testoutqueue",
+      "connection": "AzureWebJobsStorage"
+    }
+  ],
+  "disabled": false
+}

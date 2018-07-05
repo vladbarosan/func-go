@@ -64,6 +64,19 @@ func ConvertToTimerInput(d *rpc.TypedData_Json) (*azure.Timer, error) {
 	return &timer, nil
 }
 
+func ConvertToMap(d *rpc.TypedData_Json) (map[string]interface{}, error) {
+	if d == nil {
+		return nil, fmt.Errorf("cannot convert nil timer input")
+	}
+
+	m := map[string]interface{}{}
+	if err := json.Unmarshal([]byte(d.Json), &m); err != nil {
+		return nil, fmt.Errorf("cannot unmarshal map")
+	}
+
+	return m, nil
+}
+
 func ConvertToEventGridEvent(d *rpc.TypedData_Json) (*azure.EventGridEvent, error) {
 	if d == nil {
 		return nil, fmt.Errorf("cannot convert nil event grid event input")

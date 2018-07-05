@@ -38,17 +38,19 @@ const (
 
 	// QueueBinding represents a queue binding in function load request from the host
 	QueueBinding BindingType = "queue"
+
+	// TableBinding represents a table binding in function load request from the host
+	TableBinding BindingType = "table"
 )
 
-// StringToType - Because we don't have go/types information, we need to map the type info from the AST (which is string) to the actual types - see registry.go:83
-// investiage automatically adding here all types from package azure
 var StringToType = map[string]reflect.Type{
-	"*http.Request":         reflect.TypeOf((*http.Request)(nil)),
-	"*azure.Context":        reflect.TypeOf((*Context)(nil)),
-	"*azure.Blob":           reflect.TypeOf((*Blob)(nil)),
-	"*azure.Timer":          reflect.TypeOf((*Timer)(nil)),
-	"*azure.Queue":          reflect.TypeOf((*Queue)(nil)),
-	"*azure.EventGridEvent": reflect.TypeOf((*EventGridEvent)(nil)),
+	"*http.Request":          reflect.TypeOf((*http.Request)(nil)),
+	"*azure.Context":         reflect.TypeOf((*Context)(nil)),
+	"*azure.Blob":            reflect.TypeOf((*Blob)(nil)),
+	"*azure.Timer":           reflect.TypeOf((*Timer)(nil)),
+	"*azure.Queue":           reflect.TypeOf((*Queue)(nil)),
+	"*azure.EventGridEvent":  reflect.TypeOf((*EventGridEvent)(nil)),
+	"map[string]interface{}": reflect.TypeOf(reflect.TypeOf((map[string]interface{})(nil))),
 }
 
 // Func contains a function symbol with in and out param types
