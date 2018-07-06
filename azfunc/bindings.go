@@ -1,15 +1,13 @@
 package azfunc
 
 import (
+	"context"
 	"net/http"
 	"reflect"
 
 	"github.com/Azure/azure-functions-go-worker/internal/logger"
 	"github.com/Azure/azure-functions-go-worker/internal/rpc"
 )
-
-// TriggerType represents the supported trigger types.
-type TriggerType string
 
 // BindingType represents the supported binding types.
 type BindingType string
@@ -65,6 +63,7 @@ type Func struct {
 
 // Context contains the runtime context of the function
 type Context struct {
+	context.Context
 	FunctionID   string
 	InvocationID string
 	Logger       *logger.Logger
@@ -89,6 +88,14 @@ type QueueMsg struct {
 	NextVisibleTime string
 }
 
+// Blob contains the data from a blob as string
+type Blob struct {
+	Name   string
+	URI    string
+	Data   string
+	Length int
+}
+
 //EventGridEvent properties of an event published to an Event Grid topic.
 type EventGridEvent struct {
 	// ID - An unique identifier for the event.
@@ -107,12 +114,4 @@ type EventGridEvent struct {
 	MetadataVersion string `json:"metadataVersion"`
 	// DataVersion - The schema version of the data object.
 	DataVersion string `json:"dataVersion"`
-}
-
-// Blob contains the data from a blob as string
-type Blob struct {
-	Name   string
-	URI    string
-	Data   string
-	Length int
 }

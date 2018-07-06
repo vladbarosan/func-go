@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -98,7 +99,8 @@ func getFinalParams(req *rpc.InvocationRequest, f *azfunc.Func, eventStream rpc.
 		}
 	}
 
-	ctx := &azfunc.Context{
+	ctx := azfunc.Context{
+		Context:      context.Background(),
 		FunctionID:   req.FunctionId,
 		InvocationID: req.InvocationId,
 		Logger:       logger.NewLogger(eventStream, req.InvocationId),
@@ -113,7 +115,7 @@ func getFinalParams(req *rpc.InvocationRequest, f *azfunc.Func, eventStream rpc.
 		if ok {
 			params[i] = p
 			i++
-		} else if v.Type == reflect.TypeOf((*azfunc.Context)(nil)) {
+		} else if v.Type == reflect.TypeOf((azfunc.Context{})) {
 			params[i] = reflect.ValueOf(ctx)
 			i++
 		} else {
