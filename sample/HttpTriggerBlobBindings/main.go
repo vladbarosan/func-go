@@ -3,13 +3,12 @@ package main
 import (
 	"net/http"
 
+	"github.com/Azure/azure-functions-go-worker/azfunc"
 	log "github.com/Sirupsen/logrus"
-
-	"github.com/Azure/azure-functions-go-worker/azure"
 )
 
 // Run is the entrypoint to our Go Azure Function - if you want to change it, see function.json
-func Run(req *http.Request, inBlob *azure.Blob, outBlob *azure.Blob, ctx *azure.Context) BlobData {
+func Run(req *http.Request, inBlob *azfunc.Blob, outBlob *azfunc.Blob, ctx *azfunc.Context) BlobData {
 	log.SetLevel(log.DebugLevel)
 
 	log.Debugf("function id: %s, invocation id: %s", ctx.FunctionID, ctx.InvocationID)

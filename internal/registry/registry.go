@@ -9,14 +9,14 @@ import (
 	"plugin"
 	"reflect"
 
-	"github.com/Azure/azure-functions-go-worker/azure"
+	"github.com/Azure/azure-functions-go-worker/azfunc"
 	"github.com/Azure/azure-functions-go-worker/internal/rpc"
 	log "github.com/Sirupsen/logrus"
 )
 
 var (
 	// Funcs contains function id and all information the registry gets from compiled plugin and source code
-	Funcs = make(map[string]*azure.Func)
+	Funcs = map[string]*azfunc.Func{}
 )
 
 // LoadFunc populates information about the func from the compiled plugin and from parsing the source code
@@ -44,7 +44,7 @@ func LoadFunc(req *rpc.FunctionLoadRequest) error {
 
 // loadFuncFromPlugin takes the compiled plugin from the func's bin directory
 // then reads through reflection the in and out paramns of the entrypoint
-func loadFuncFromPlugin(metadata *rpc.RpcFunctionMetadata) (*azure.Func, error) {
+func loadFuncFromPlugin(metadata *rpc.RpcFunctionMetadata) (*azfunc.Func, error) {
 
 	path := fmt.Sprintf("%s/bin/%s.so", metadata.Directory, metadata.Name)
 	plugin, err := plugin.Open(path)
@@ -72,15 +72,15 @@ func loadFuncFromPlugin(metadata *rpc.RpcFunctionMetadata) (*azure.Func, error) 
 		out[i] = t.Out(i)
 	}
 
-	return &azure.Func{
+	return &azfunc.Func{
 		Func: reflect.ValueOf(symbol),
 		In:   in,
 		Out:  out,
 	}, nil
 }
 
-func parseEntrypoint(metadata *rpc.RpcFunctionMetadata) ([]*azure.Arg, error) {
-	var namedInArgs []*azure.Arg
+func parseEntrypoint(metadata *rpc.RpcFunctionMetadata) ([]*azfunc.Arg, error) {
+	var namedInArgs []*azfunc.Arg
 
 	fs := token.NewFileSet()
 	f, err := parser.ParseFile(fs, metadata.ScriptFile, nil, parser.AllErrors)
@@ -105,9 +105,9 @@ func parseEntrypoint(metadata *rpc.RpcFunctionMetadata) ([]*azure.Arg, error) {
 					key := types.ExprString(p.Type)
 					log.Debugf("Found parameter: %v with type: %v and string expr: %s", n, p.Type, key)
 
-					t, ok := azure.StringToType[key]
+					t, ok := azfunc.StringToType[key]
 					if ok {
-						namedInArgs = append(namedInArgs, &azure.Arg{
+						namedInArgs = append(namedInArgs, &azfunc.Arg{
 							Name: n.Name,
 							Type: t,
 						})

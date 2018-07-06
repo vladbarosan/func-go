@@ -2,7 +2,7 @@
   "entryPoint": "Run",
   "bindings": [
     {
-      "schedule": "0 */1 * * * *",
+      "schedule": "0 */30 * * * *",
       "name": "timer",
       "type": "timerTrigger",
       "direction": "in"

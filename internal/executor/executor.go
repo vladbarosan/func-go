@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/Azure/azure-functions-go-worker/azure"
+	"github.com/Azure/azure-functions-go-worker/azfunc"
 	"github.com/Azure/azure-functions-go-worker/internal/logger"
 	"github.com/Azure/azure-functions-go-worker/internal/registry"
 	"github.com/Azure/azure-functions-go-worker/internal/rpc"
@@ -78,7 +78,7 @@ func ExecuteFunc(req *rpc.InvocationRequest, eventStream rpc.FunctionRpc_EventSt
 	}
 }
 
-func getFinalParams(req *rpc.InvocationRequest, f *azure.Func, eventStream rpc.FunctionRpc_EventStreamClient) ([]reflect.Value, map[string]reflect.Value, error) {
+func getFinalParams(req *rpc.InvocationRequest, f *azfunc.Func, eventStream rpc.FunctionRpc_EventStreamClient) ([]reflect.Value, map[string]reflect.Value, error) {
 	args := make(map[string]reflect.Value)
 	outBindings := make(map[string]reflect.Value)
 
@@ -87,7 +87,7 @@ func getFinalParams(req *rpc.InvocationRequest, f *azure.Func, eventStream rpc.F
 	for _, input := range req.InputData {
 		binding, ok := f.Bindings[input.Name]
 		if ok {
-			v, err := getValueFromBinding(input, binding)
+			v, err := getInputValue(input, binding, req.GetTriggerMetadata())
 			if err != nil {
 				log.Debugf("cannot transform typed binding: %v", err)
 				return nil, nil, err
@@ -98,7 +98,7 @@ func getFinalParams(req *rpc.InvocationRequest, f *azure.Func, eventStream rpc.F
 		}
 	}
 
-	ctx := &azure.Context{
+	ctx := &azfunc.Context{
 		FunctionID:   req.FunctionId,
 		InvocationID: req.InvocationId,
 		Logger:       logger.NewLogger(eventStream, req.InvocationId),
@@ -113,7 +113,7 @@ func getFinalParams(req *rpc.InvocationRequest, f *azure.Func, eventStream rpc.F
 		if ok {
 			params[i] = p
 			i++
-		} else if v.Type == reflect.TypeOf((*azure.Context)(nil)) {
+		} else if v.Type == reflect.TypeOf((*azfunc.Context)(nil)) {
 			params[i] = reflect.ValueOf(ctx)
 			i++
 		} else {
@@ -136,103 +136,80 @@ func getFinalParams(req *rpc.InvocationRequest, f *azure.Func, eventStream rpc.F
 	return params, outBindings, nil
 }
 
-func getValueFromBinding(input *rpc.ParameterBinding, binding *rpc.BindingInfo) (reflect.Value, error) {
-	switch azure.BindingType(binding.Type) {
-	case azure.HTTPTrigger:
-		switch r := input.Data.Data.(type) {
-		case *rpc.TypedData_Http:
-			h, err := util.ConvertToNativeRequest(r.Http)
-			log.Debugf("Converted Http data: %v to: %v", r.Http, *h)
+func getInputValue(input *rpc.ParameterBinding, binding *rpc.BindingInfo, triggetMetadata map[string]*rpc.TypedData) (value reflect.Value, err error) {
+	switch azfunc.BindingType(binding.Type) {
+	case azfunc.HTTPTrigger:
+		h, err := util.ConvertToNativeRequest(input.GetData())
+		log.Debugf("Converted Http data: %v to: %v", input.Data.Data, *h)
 
-			if err != nil {
-				return reflect.New(nil), err
-			}
-			return reflect.ValueOf(h), nil
+		if err != nil {
+			return reflect.New(nil), err
+		}
+		return reflect.ValueOf(h), nil
+
+	case azfunc.TimerTrigger:
+		t, err := util.ConvertToTimer(input.GetData())
+		log.Debugf("Converted timer data: %v to: %v", input.GetData().GetData(), *t)
+
+		if err != nil {
+			return reflect.New(nil), err
 		}
 
-	case azure.TimerTrigger:
-		switch d := input.Data.Data.(type) {
-		case *rpc.TypedData_Json:
-			t, err := util.ConvertToTimer(d)
-			log.Debugf("Converted timer data: %v to: %v", d, *t)
+		return reflect.ValueOf(t), nil
 
-			if err != nil {
-				return reflect.New(nil), err
-			}
+	case azfunc.EventGridTrigger:
+		t, err := util.ConvertToEventGridEvent(input.GetData())
+		log.Debugf("Converted event grid trigger: %v to: %v", input.GetData().GetData(), *t)
 
-			return reflect.ValueOf(t), nil
+		if err != nil {
+			return reflect.New(nil), err
 		}
 
-	case azure.EventGridTrigger:
-		switch d := input.Data.Data.(type) {
-		case *rpc.TypedData_Json:
-			t, err := util.ConvertToEventGridEvent(d)
-			log.Debugf("Converted event grid trigger: %v to: %v", d, *t)
+		return reflect.ValueOf(t), nil
 
-			if err != nil {
-				return reflect.New(nil), err
-			}
-
-			return reflect.ValueOf(t), nil
-		}
-
-	case azure.BlobTrigger:
+	case azfunc.BlobTrigger:
 		fallthrough
-	case azure.BlobBinding:
-		switch d := input.Data.Data.(type) {
-		case *rpc.TypedData_String_:
-			b, err := util.ConvertToBlob(d)
-			log.Debugf("Converted blob binding: %v to: %v", d, b)
-			if err != nil {
-				return reflect.New(nil), err
-			}
-
-			return reflect.ValueOf(b), nil
+	case azfunc.BlobBinding:
+		b, err := util.ConvertToBlob(input.GetData())
+		log.Debugf("Converted blob binding: %v to: %v", input.GetData().GetData(), b)
+		if err != nil {
+			return reflect.New(nil), err
 		}
-	case azure.QueueTrigger:
-		switch d := input.Data.Data.(type) {
-		case *rpc.TypedData_String_:
-			qm, err := util.ConvertToQueueMsg(d)
-			log.Debugf("Converted table binding: %v to: %v", d, qm)
-			if err != nil {
-				return reflect.New(nil), err
-			}
 
-			return reflect.ValueOf(qm), nil
+		return reflect.ValueOf(b), nil
+	case azfunc.QueueTrigger:
+		qm, err := util.ConvertToQueueMsg(input.GetData())
+		log.Debugf("Converted queue mesg binding: %v to: %v", input.GetData().GetData(), qm)
+		if err != nil {
+			return reflect.New(nil), err
 		}
-	case azure.TableBinding:
-		switch d := input.Data.Data.(type) {
-		case *rpc.TypedData_Json:
-			m, err := util.ConvertToMap(d)
-			log.Debugf("Converted table binding: %v to: %v", d, m)
 
-			if err != nil {
-				return reflect.New(nil), err
-			}
+		return reflect.ValueOf(qm), nil
+	case azfunc.TableBinding:
+		m, err := util.ConvertToMap(input.GetData())
+		log.Debugf("Converted table binding: %v to: %v", input.GetData().GetData(), m)
 
-			return reflect.ValueOf(m), nil
+		if err != nil {
+			return reflect.New(nil), err
 		}
+
+		return reflect.ValueOf(m), nil
+	default:
+		return reflect.New(nil), fmt.Errorf("cannot handle binding %v", binding.Type)
 	}
-
-	return reflect.New(nil), fmt.Errorf("cannot handle binding %v", binding.Type)
 }
 
 func getOutBinding(b *rpc.BindingInfo) (reflect.Value, error) {
-	switch azure.BindingType(b.Type) {
-	case azure.BlobBinding:
-		b := &azure.Blob{
-			Data: "",
-		}
-		return reflect.ValueOf(b), nil
-
-	case azure.QueueBinding:
-		b := &azure.QueueMsg{
-			Data: "",
-		}
-		return reflect.ValueOf(b), nil
-	case azure.TableBinding:
-		b := map[string]interface{}{}
-		return reflect.ValueOf(b), nil
+	switch azfunc.BindingType(b.Type) {
+	case azfunc.BlobBinding:
+		d := &azfunc.Blob{}
+		return reflect.ValueOf(d), nil
+	case azfunc.QueueBinding:
+		d := &azfunc.QueueMsg{}
+		return reflect.ValueOf(d), nil
+	case azfunc.TableBinding:
+		d := map[string]interface{}{}
+		return reflect.ValueOf(d), nil
 	default:
 		return reflect.New(nil), fmt.Errorf("cannot handle binding %v", b.Type)
 	}

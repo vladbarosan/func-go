@@ -1,4 +1,4 @@
-package azure
+package azfunc
 
 import (
 	"net/http"
@@ -45,11 +45,11 @@ const (
 
 var StringToType = map[string]reflect.Type{
 	"*http.Request":          reflect.TypeOf((*http.Request)(nil)),
-	"*azure.Context":         reflect.TypeOf((*Context)(nil)),
-	"*azure.Blob":            reflect.TypeOf((*Blob)(nil)),
-	"*azure.Timer":           reflect.TypeOf((*Timer)(nil)),
-	"*azure.QueueMsg":        reflect.TypeOf((*QueueMsg)(nil)),
-	"*azure.EventGridEvent":  reflect.TypeOf((*EventGridEvent)(nil)),
+	"*azfunc.Context":        reflect.TypeOf((*Context)(nil)),
+	"*azfunc.Blob":           reflect.TypeOf((*Blob)(nil)),
+	"*azfunc.Timer":          reflect.TypeOf((*Timer)(nil)),
+	"*azfunc.QueueMsg":       reflect.TypeOf((*QueueMsg)(nil)),
+	"*azfunc.EventGridEvent": reflect.TypeOf((*EventGridEvent)(nil)),
 	"map[string]interface{}": reflect.TypeOf(reflect.TypeOf((map[string]interface{})(nil))),
 }
 
@@ -87,4 +87,32 @@ type QueueMsg struct {
 	InsertionTime   string
 	ExpirationTime  string
 	NextVisibleTime string
+}
+
+//EventGridEvent properties of an event published to an Event Grid topic.
+type EventGridEvent struct {
+	// ID - An unique identifier for the event.
+	ID string `json:"id"`
+	// Topic - The resource path of the event source.
+	Topic string `json:"topic"`
+	// Subject - A resource path relative to the topic path.
+	Subject string `json:"subject"`
+	// Data - Event data specific to the event type.
+	Data map[string]interface{} `json:"data"`
+	// EventType - The type of the event that occurred.
+	EventType string `json:"eventType"`
+	// EventTime - The time (in UTC) the event was generated.
+	EventTime string `json:"eventTime"`
+	// MetadataVersion - The schema version of the event metadata.
+	MetadataVersion string `json:"metadataVersion"`
+	// DataVersion - The schema version of the data object.
+	DataVersion string `json:"dataVersion"`
+}
+
+// Blob contains the data from a blob as string
+type Blob struct {
+	Name   string
+	URI    string
+	Data   string
+	Length int
 }

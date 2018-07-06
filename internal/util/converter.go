@@ -8,13 +8,20 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/Azure/azure-functions-go-worker/azure"
+	"github.com/Azure/azure-functions-go-worker/azfunc"
 	"github.com/Azure/azure-functions-go-worker/internal/rpc"
 )
 
 // ConvertToNativeRequest returns a native http.Request from an rpc.HttpTrigger
-func ConvertToNativeRequest(r *rpc.RpcHttp) (*http.Request, error) {
+func ConvertToNativeRequest(d *rpc.TypedData) (*http.Request, error) {
 
+	t, ok := d.Data.(*rpc.TypedData_Http)
+
+	if !ok {
+		return nil, fmt.Errorf("cannot convert non http Http request")
+	}
+
+	r := t.Http
 	if r == nil {
 		return nil, fmt.Errorf("cannot convert nil request")
 	}
@@ -40,62 +47,78 @@ func ConvertToNativeRequest(r *rpc.RpcHttp) (*http.Request, error) {
 }
 
 // ConvertToBlob returns a formatted Blob from an rpc.TypedData_String (as blob inputs are for now)
-func ConvertToBlob(d *rpc.TypedData_String_) (*azure.Blob, error) {
-	if d == nil {
-		return nil, fmt.Errorf("cannot convert nil blob input")
+func ConvertToBlob(d *rpc.TypedData) (*azfunc.Blob, error) {
+
+	t, ok := d.Data.(*rpc.TypedData_String_)
+
+	if !ok {
+		return nil, fmt.Errorf("cannot convert blob input")
 	}
 
-	return &azure.Blob{
-		Data: d.String_,
+	return &azfunc.Blob{
+		Data: t.String_,
 	}, nil
 }
 
 // ConvertToQueueMsg returns a formatted Queue from an rpc.TypedData_String
-func ConvertToQueueMsg(d *rpc.TypedData_String_) (*azure.QueueMsg, error) {
-	if d == nil {
-		return nil, fmt.Errorf("cannot convert nil blob input")
+func ConvertToQueueMsg(d *rpc.TypedData) (*azfunc.QueueMsg, error) {
+	t, ok := d.Data.(*rpc.TypedData_String_)
+
+	if !ok {
+		return nil, fmt.Errorf("cannot convert queue message input")
 	}
 
-	return &azure.QueueMsg{
-		Data: d.String_,
+	return &azfunc.QueueMsg{
+		Data: t.String_,
 	}, nil
 }
 
 //ConvertToTimer returns a formatted TimerInput from an rpc.
-func ConvertToTimer(d *rpc.TypedData_Json) (*azure.Timer, error) {
-	if d == nil {
-		return nil, fmt.Errorf("cannot convert nil timer input")
+func ConvertToTimer(d *rpc.TypedData) (*azfunc.Timer, error) {
+
+	t, ok := d.Data.(*rpc.TypedData_Json)
+
+	if !ok {
+		return nil, fmt.Errorf("cannot convert non json timer")
 	}
 
-	timer := azure.Timer{}
-	if err := json.Unmarshal([]byte(d.Json), &timer); err != nil {
+	timer := azfunc.Timer{}
+	if err := json.Unmarshal([]byte(t.Json), &timer); err != nil {
 		return nil, fmt.Errorf("cannot unmarshal timer object")
 	}
 
 	return &timer, nil
 }
 
-func ConvertToMap(d *rpc.TypedData_Json) (map[string]interface{}, error) {
-	if d == nil {
-		return nil, fmt.Errorf("cannot convert nil timer input")
+// ConvertToMap returns a map object
+func ConvertToMap(d *rpc.TypedData) (map[string]interface{}, error) {
+
+	t, ok := d.Data.(*rpc.TypedData_Json)
+
+	if !ok {
+		return nil, fmt.Errorf("cannot convert non json map input")
 	}
 
 	m := map[string]interface{}{}
-	if err := json.Unmarshal([]byte(d.Json), &m); err != nil {
+	if err := json.Unmarshal([]byte(t.Json), &m); err != nil {
 		return nil, fmt.Errorf("cannot unmarshal map")
 	}
 
 	return m, nil
 }
 
-func ConvertToEventGridEvent(d *rpc.TypedData_Json) (*azure.EventGridEvent, error) {
-	if d == nil {
-		return nil, fmt.Errorf("cannot convert nil event grid event input")
+// ConvertToEventGridEvent returns an EventGridEvent
+func ConvertToEventGridEvent(d *rpc.TypedData) (*azfunc.EventGridEvent, error) {
+
+	t, ok := d.Data.(*rpc.TypedData_Json)
+
+	if !ok {
+		return nil, fmt.Errorf("cannot convert non json event grid event input")
 	}
 
-	eventGridEvent := azure.EventGridEvent{}
-	if err := json.Unmarshal([]byte(d.Json), &eventGridEvent); err != nil {
-		return nil, fmt.Errorf("cannot unmarshal timer object")
+	eventGridEvent := azfunc.EventGridEvent{}
+	if err := json.Unmarshal([]byte(t.Json), &eventGridEvent); err != nil {
+		return nil, fmt.Errorf("cannot unmarshal event grid event object")
 	}
 
 	return &eventGridEvent, nil
