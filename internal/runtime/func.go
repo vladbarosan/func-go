@@ -1,4 +1,4 @@
-package executor
+package runtime
 
 import (
 	"context"
@@ -8,46 +8,46 @@ import (
 
 	"github.com/Azure/azure-functions-go-worker/azfunc"
 	"github.com/Azure/azure-functions-go-worker/internal/logger"
-	"github.com/Azure/azure-functions-go-worker/internal/registry"
 	"github.com/Azure/azure-functions-go-worker/internal/rpc"
 	"github.com/Azure/azure-functions-go-worker/internal/util"
 	log "github.com/Sirupsen/logrus"
 )
 
-// ExecuteFunc takes an InvocationRequest and executes the function with corresponding function ID
-func ExecuteFunc(req *rpc.InvocationRequest, eventStream rpc.FunctionRpc_EventStreamClient) (response *rpc.InvocationResponse) {
+// Func contains a function symbol with in and out param types
+type Func struct {
+	Value reflect.Value
+	Type  reflect.Type
+	In    map[string]*FuncField
+	Out   map[string]*FuncField
+}
 
-	log.Debugf("\n\n\nInvocation Request: %v", req)
+// FuncField represents a representation of a func field
+type FuncField struct {
+	Name     string
+	Type     reflect.Type
+	Binding  *rpc.BindingInfo
+	Position int
+}
 
-	status := rpc.StatusResult_Success
-
-	f, ok := registry.Funcs[req.FunctionId]
-	if !ok {
-		log.Debugf("function with functionID %v not loaded", req.FunctionId)
-		status = rpc.StatusResult_Failure
-	}
-	params, outBindings, err := getFinalParams(req, f, eventStream)
+func (f *Func) Call(req *rpc.InvocationRequest, eventStream rpc.FunctionRpc_EventStreamClient) ([]*rpc.ParameterBinding, *string, error) {
+	params, err := f.bindInputValues(req, eventStream)
 	if err != nil {
 		log.Debugf("cannot get params from request: %v", err)
-		status = rpc.StatusResult_Failure
+		return nil, nil, err
 	}
+	output := f.Value.Call(params)
 
-	log.Debugf("params: %v", params)
-	log.Debugf("out bindings: %v", outBindings)
+	outputData := make([]*rpc.ParameterBinding, len(f.Out))
 
-	output := f.Func.Call(params)
+	for _, v := range f.Out {
 
-	outputData := make([]*rpc.ParameterBinding, len(outBindings))
-	i := 0
-	for k, v := range outBindings {
-
-		b, err := json.Marshal(v.Interface())
+		b, err := json.Marshal(output[v.Position].Interface())
 		if err != nil {
 			log.Debugf("failed to marshal, %v:", err)
 		}
 
-		outputData[i] = &rpc.ParameterBinding{
-			Name: k,
+		outputData[v.Position] = &rpc.ParameterBinding{
+			Name: v.Name,
 			Data: &rpc.TypedData{
 				Data: &rpc.TypedData_Json{
 					Json: string(b),
@@ -56,90 +56,63 @@ func ExecuteFunc(req *rpc.InvocationRequest, eventStream rpc.FunctionRpc_EventSt
 		}
 	}
 
-	r := ""
-	if len(output) > 0 {
-		b, err := json.Marshal(output[0].Interface())
-		r = string(b)
-		if err != nil {
-			log.Debugf("failed to marshal, %v:", err)
-		}
+	if len(f.Out) > 0 {
+		return outputData, nil, nil
 	}
 
-	return &rpc.InvocationResponse{
-		InvocationId: req.InvocationId,
-		Result: &rpc.StatusResult{
-			Status: status,
-		},
-		ReturnValue: &rpc.TypedData{
-			Data: &rpc.TypedData_Json{
-				Json: r,
-			},
-		},
-		OutputData: outputData,
+	r := ""
+
+	b, err := json.Marshal(output[0].Interface())
+	r = string(b)
+	if err != nil {
+		log.Debugf("failed to marshal, %v:", err)
 	}
+
+	return outputData, &r, nil
 }
 
-func getFinalParams(req *rpc.InvocationRequest, f *azfunc.Func, eventStream rpc.FunctionRpc_EventStreamClient) ([]reflect.Value, map[string]reflect.Value, error) {
+// bindValues configures the function bindings with the values received
+func (f Func) bindInputValues(req *rpc.InvocationRequest, eventStream rpc.FunctionRpc_EventStreamClient) ([]reflect.Value, error) {
 	args := make(map[string]reflect.Value)
-	outBindings := make(map[string]reflect.Value)
 
 	// iterate through the invocation request input data
 	// if the name of the input data is in the function bindings, then attempt to get the typed binding
 	for _, input := range req.InputData {
-		binding, ok := f.Bindings[input.Name]
+		param, ok := f.In[input.Name]
 		if ok {
-			v, err := getInputValue(input, binding, req.GetTriggerMetadata())
+			v, err := getInputValue(param, input, req.GetTriggerMetadata())
 			if err != nil {
 				log.Debugf("cannot transform typed binding: %v", err)
-				return nil, nil, err
+				return nil, err
 			}
 			args[input.Name] = v
 		} else {
-			return nil, nil, fmt.Errorf("cannot find input %v in function bindings", input.Name)
+			return nil, fmt.Errorf("cannot find input %v in function bindings", input.Name)
 		}
-	}
-
-	ctx := azfunc.Context{
-		Context:      context.Background(),
-		FunctionID:   req.FunctionId,
-		InvocationID: req.InvocationId,
-		Logger:       logger.NewLogger(eventStream, req.InvocationId),
 	}
 
 	log.Debugf("args map: %v", args)
 
-	params := make([]reflect.Value, len(f.NamedInArgs))
-	i := 0
-	for _, v := range f.NamedInArgs {
-		p, ok := args[v.Name]
-		if ok {
-			params[i] = p
-			i++
-		} else if v.Type == reflect.TypeOf((azfunc.Context{})) {
-			params[i] = reflect.ValueOf(ctx)
-			i++
-		} else {
-			b, ok := f.Bindings[v.Name]
-			if ok {
-				if b.Direction == rpc.BindingInfo_out {
-					o, err := getOutBinding(b)
-					if err != nil {
-						return nil, nil, fmt.Errorf("cannot get out binding %s: %v", v.Name, err)
-					}
-
-					params[i] = o
-					outBindings[v.Name] = o
-					i++
-				}
+	params := make([]reflect.Value, len(f.In))
+	for _, v := range f.In {
+		if v.Type == reflect.TypeOf((azfunc.Context{})) {
+			ctx := azfunc.Context{
+				Context:      context.Background(),
+				FunctionID:   req.FunctionId,
+				InvocationID: req.InvocationId,
+				Logger:       logger.NewLogger(eventStream, req.InvocationId),
 			}
+			params[v.Position] = reflect.ValueOf(ctx)
+		} else {
+			params[v.Position] = args[v.Name]
 		}
 	}
 
-	return params, outBindings, nil
+	return params, nil
 }
 
-func getInputValue(input *rpc.ParameterBinding, binding *rpc.BindingInfo, triggetMetadata map[string]*rpc.TypedData) (value reflect.Value, err error) {
-	switch azfunc.BindingType(binding.Type) {
+func getInputValue(field *FuncField, input *rpc.ParameterBinding, triggetMetadata map[string]*rpc.TypedData) (value reflect.Value, err error) {
+	switch azfunc.BindingType(field.Binding.Type) {
 	case azfunc.HTTPTrigger:
 		h, err := util.ConvertToNativeRequest(input.GetData())
 		log.Debugf("Converted Http data: %v to: %v", input.Data.Data, *h)
@@ -197,7 +170,7 @@ func getInputValue(input *rpc.ParameterBinding, binding *rpc.BindingInfo, trigge
 
 		return reflect.ValueOf(m), nil
 	default:
-		return reflect.New(nil), fmt.Errorf("cannot handle binding %v", binding.Type)
+		return reflect.New(nil), fmt.Errorf("cannot handle binding %v", field.Binding.Type)
 	}
 }
 

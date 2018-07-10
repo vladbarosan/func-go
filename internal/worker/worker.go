@@ -1,31 +1,41 @@
 package worker
 
 import (
-	"github.com/Azure/azure-functions-go-worker/internal/executor"
-	"github.com/Azure/azure-functions-go-worker/internal/registry"
 	"github.com/Azure/azure-functions-go-worker/internal/rpc"
+	"github.com/Azure/azure-functions-go-worker/internal/runtime"
 	log "github.com/Sirupsen/logrus"
 )
 
-func handleStreamingMessage(message *rpc.StreamingMessage, client *Client, eventStream rpc.FunctionRpc_EventStreamClient) {
+type worker struct {
+	registry *runtime.Registry
+}
+
+// newWorker returns a new instance of Client
+func newWorker() *worker {
+	return &worker{
+		registry: runtime.NewRegistry(),
+	}
+}
+
+func (w worker) handleStreamingMessage(message *rpc.StreamingMessage, client *Client, eventStream rpc.FunctionRpc_EventStreamClient) {
 	log.Debugf("received message: %v", message)
 	switch m := message.Content.(type) {
 
 	case *rpc.StreamingMessage_WorkerInitRequest:
-		handleWorkerInitRequest(message.RequestId, m, client, eventStream)
+		w.handleWorkerInitRequest(message.RequestId, m, client, eventStream)
 
 	case *rpc.StreamingMessage_FunctionLoadRequest:
-		handleFunctionLoadRequest(message.RequestId, m, client, eventStream)
+		w.handleFunctionLoadRequest(message.RequestId, m, client, eventStream)
 
 	case *rpc.StreamingMessage_InvocationRequest:
-		handleInvocationRequest(message.RequestId, m, client, eventStream)
+		w.handleInvocationRequest(message.RequestId, m, client, eventStream)
 
 	default:
 		log.Debugf("received message: %v", message)
 	}
 }
 
-func handleWorkerInitRequest(requestID string,
+func (w worker) handleWorkerInitRequest(requestID string,
 	message *rpc.StreamingMessage_WorkerInitRequest,
 	client *Client,
 	eventStream rpc.FunctionRpc_EventStreamClient) {
@@ -50,13 +60,13 @@ func handleWorkerInitRequest(requestID string,
 	log.Debugf("sent start worker init response: %v", workerInitResponse)
 }
 
-func handleFunctionLoadRequest(requestID string,
+func (w worker) handleFunctionLoadRequest(requestID string,
 	message *rpc.StreamingMessage_FunctionLoadRequest,
 	client *Client,
 	eventStream rpc.FunctionRpc_EventStreamClient) {
 
 	status := rpc.StatusResult_Success
-	err := registry.LoadFunc(message.FunctionLoadRequest)
+	err := w.registry.LoadFunc(message.FunctionLoadRequest)
 	if err != nil {
 		status = rpc.StatusResult_Failure
 		log.Debugf("could not load function: %v", err)
@@ -80,12 +90,12 @@ func handleFunctionLoadRequest(requestID string,
 	log.Debugf("sent function load response: %v", functionLoadResponse)
 }
 
-func handleInvocationRequest(requestID string,
+func (w worker) handleInvocationRequest(requestID string,
 	message *rpc.StreamingMessage_InvocationRequest,
 	client *Client,
 	eventStream rpc.FunctionRpc_EventStreamClient) {
 
-	response := executor.ExecuteFunc(message.InvocationRequest, eventStream)
+	response := w.registry.ExecuteFunc(message.InvocationRequest, eventStream)
 
 	invocationResponse := &rpc.StreamingMessage{
 		RequestId: requestID,

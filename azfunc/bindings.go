@@ -2,11 +2,8 @@ package azfunc
 
 import (
 	"context"
-	"net/http"
-	"reflect"
 
 	"github.com/Azure/azure-functions-go-worker/internal/logger"
-	"github.com/Azure/azure-functions-go-worker/internal/rpc"
 )
 
 // BindingType represents the supported binding types.
@@ -41,38 +38,12 @@ const (
 	TableBinding BindingType = "table"
 )
 
-var StringToType = map[string]reflect.Type{
-	"*http.Request":          reflect.TypeOf((*http.Request)(nil)),
-	"*azfunc.Context":        reflect.TypeOf((*Context)(nil)),
-	"*azfunc.Blob":           reflect.TypeOf((*Blob)(nil)),
-	"*azfunc.Timer":          reflect.TypeOf((*Timer)(nil)),
-	"*azfunc.QueueMsg":       reflect.TypeOf((*QueueMsg)(nil)),
-	"*azfunc.EventGridEvent": reflect.TypeOf((*EventGridEvent)(nil)),
-	"map[string]interface{}": reflect.TypeOf(reflect.TypeOf((map[string]interface{})(nil))),
-}
-
-// Func contains a function symbol with in and out param types
-type Func struct {
-	Func             reflect.Value
-	Bindings         map[string]*rpc.BindingInfo
-	In               []reflect.Type
-	NamedInArgs      []*Arg
-	Out              []reflect.Type
-	NamedOutBindings map[string]reflect.Value
-}
-
 // Context contains the runtime context of the function
 type Context struct {
 	context.Context
 	FunctionID   string
 	InvocationID string
 	Logger       *logger.Logger
-}
-
-// Arg represents an initial representation of a func argument
-type Arg struct {
-	Name string
-	Type reflect.Type
 }
 
 type Timer struct {
