@@ -46,17 +46,20 @@ type Context struct {
 	Logger       *logger.Logger
 }
 
+// Timer represents a timer trigger
 type Timer struct {
 	PastDue bool `json:"IsPastDue"`
 }
 
+// QueueMsg represents an Azure queue message
 type QueueMsg struct {
-	ID              string
-	Data            string
-	DequeueCount    int
-	InsertionTime   string
-	ExpirationTime  string
-	NextVisibleTime string
+	Text         string
+	ID           string `json:"Id"`
+	Insertion    string `json:"InsertionTime"`
+	Expiration   string `json:"ExpirationTime"`
+	PopReceipt   string `json:"PopReceipt"`
+	NextVisible  string `json:"NextVisibleTime"`
+	DequeueCount int    `json:"DequeueCount"`
 }
 
 // Blob contains the data from a blob as string

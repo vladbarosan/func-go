@@ -67,5 +67,9 @@ func startWorker(args []string) {
 	}
 	defer client.Disconnect()
 
-	client.StartEventStream(context.Background())
+	err = client.StartEventStream(context.Background())
+
+	if err != nil {
+		log.Fatalf("cannot start event stream: %v", err)
+	}
 }
