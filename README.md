@@ -23,28 +23,18 @@ Now let's see the Golang function:
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/Azure/azure-functions-go-worker/azfunc"
 )
 
 // Run is the entrypoint to our Go Azure Function - if you want to change it, see function.json
-func Run(req *http.Request, ctx *azfunc.Context) User {
-	ctx.Logger.Log("Log message from function %v, invocation %v to the runtime", ctx.FunctionID, ctx.InvocationID)
+func Run(ctx azfunc.Context, req *http.Request, inBlob *azfunc.Blob) (outBlob string) {
 
-	u := User{
-		Name:          req.Query["name"],
-		GeneratedName: fmt.Sprintf("%s-azfunc", req.Query["name"]),
-	}
+	ctx.Logger.Log("function id: %s, invocation id: %s with blob : %v", ctx.FunctionID, ctx.InvocationID, *inBlob)
 
-	return u
-}
-
-// User mocks any struct (or pointer to struct) you might want to return
-type User struct {
-	Name          string
-	GeneratedName string
+	outBlob = inBlob.Content
+	return
 }
 ```
 
@@ -52,12 +42,27 @@ Things to notice:
 
 - we can use any vendored dependencies we might have available at compile time (everything is packaged as a Golang plugin)
 - the name of the function is `Run` - can be changed, just remember to do the same in `function.json`
-- the function signature - `func Run(req *http.Request, ctx *azfunc.Context) User`. Based on the `function.json` file, `req`, `User`, `outBlob` and `ctx` are automatically populated by the worker.
+- the function signature - `func Run(req *http.Request, ctx *azfunc.Context) User`. Based on the `function.json` file, `ctx`, `req`, and `inBlob` are automatically populated by the worker.
 
   > **The content of the parameters is populated based on the name of the parameter! You can change the order, but the name has to be consistent with the name of the binding defined in `function.json`!**
 
-- you can have a return type from the function that, in the case of the `HTTPTrigger` is packaged back as the response body.
+- you can have a named returned type that needs to match an output binding in `function.json`. You can also have 1 anonymous return value that will match the `$return` binding.
 
 ## Disclaimer
 
 The project is currently work in progress. Please do not use in production as we expect developments over time.
+
+## Contributing
+
+This project welcomes contributions and suggestions. Most contributions require you to agree to a
+Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
+the rights to use your contribution. For details, visit https://cla.microsoft.com.
+
+When you submit a pull request, a CLA-bot will automatically determine whether you need to provide
+a CLA and decorate the PR appropriately (e.g., label, comment). Simply follow the instructions
+provided by the bot. You will only need to do this once across all repos using our CLA.
+
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
+contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+s

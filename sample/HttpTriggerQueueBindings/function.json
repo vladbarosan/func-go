@@ -8,7 +8,7 @@
       "name": "req"
     },
     {
-      "name": "outQueue",
+      "name": "out",
       "type": "queue",
       "direction": "out",
       "queueName": "testoutqueue",

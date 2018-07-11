@@ -2,7 +2,7 @@
   "entryPoint": "Run",
   "bindings": [
     {
-      "name": "in",
+      "name": "blob",
       "type": "blobTrigger",
       "direction": "in",
       "path": "demo/{name}",

@@ -6,38 +6,6 @@ import (
 	"github.com/Azure/azure-functions-go-worker/internal/logger"
 )
 
-// BindingType represents the supported binding types.
-type BindingType string
-
-const (
-	// HTTPTrigger represents a HTTP trigger in function load request from the host
-	HTTPTrigger BindingType = "httpTrigger"
-
-	// BlobTrigger represents a blob trigger in function load request from host
-	BlobTrigger BindingType = "blobTrigger"
-
-	// QueueTrigger represents a queue trigger in function load request from host
-	QueueTrigger BindingType = "queueTrigger"
-
-	// TimerTrigger represents a queue trigger in function load request from host
-	TimerTrigger BindingType = "timerTrigger"
-
-	// EventGridTrigger represents a queue trigger in function load request from host
-	EventGridTrigger BindingType = "eventGridTrigger"
-
-	// HTTPBinding represents a HTTP binding in function load request from the host
-	HTTPBinding BindingType = "http"
-
-	// BlobBinding represents a blob binding in function load request from the host
-	BlobBinding BindingType = "blob"
-
-	// QueueBinding represents a queue binding in function load request from the host
-	QueueBinding BindingType = "queue"
-
-	// TableBinding represents a table binding in function load request from the host
-	TableBinding BindingType = "table"
-)
-
 // Context contains the runtime context of the function
 type Context struct {
 	context.Context
@@ -48,12 +16,20 @@ type Context struct {
 
 // Timer represents a timer trigger
 type Timer struct {
-	PastDue bool `json:"IsPastDue"`
+	PastDue       bool           `json:"IsPastDue"`
+	ScheduleStats ScheduleStatus `json:"ScheduleStatus"`
+}
+
+// ScheduleStatus contains the schedule for a Timer
+type ScheduleStatus struct {
+	Next        string `json:"Next"`
+	Last        string `json:"Last"`
+	LastUpdated string `json:"LastUpdated"`
 }
 
 // QueueMsg represents an Azure queue message
 type QueueMsg struct {
-	Text         string `json:"data"`
+	Text         string `json:"azfuncdata"`
 	ID           string `json:"Id"`
 	Insertion    string `json:"InsertionTime"`
 	Expiration   string `json:"ExpirationTime"`
@@ -64,10 +40,19 @@ type QueueMsg struct {
 
 // Blob contains the data from a blob as string
 type Blob struct {
-	Name   string
-	URI    string
-	Data   string
-	Length int
+	Content    string         `json:"azfuncdata"`
+	Name       string         `json:"name"`
+	URI        string         `json:"Uri"`
+	Properties BlobProperties `json:"Properties"`
+}
+
+// BlobProperties contain metadata about a blob
+type BlobProperties struct {
+	Length       int    `json:"Length"`
+	ContentMD5   string `json:"ContentMD5"`
+	ContentType  string `json:"ContentType"`
+	ETag         string `json:"ETag"`
+	LastModified string `json:"LastModified"`
 }
 
 //EventGridEvent properties of an event published to an Event Grid topic.
