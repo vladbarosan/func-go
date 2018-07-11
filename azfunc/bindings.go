@@ -53,7 +53,7 @@ type Timer struct {
 
 // QueueMsg represents an Azure queue message
 type QueueMsg struct {
-	Text         string
+	Text         string `json:"data"`
 	ID           string `json:"Id"`
 	Insertion    string `json:"InsertionTime"`
 	Expiration   string `json:"ExpirationTime"`

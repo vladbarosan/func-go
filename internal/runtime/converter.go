@@ -20,22 +20,22 @@ type fromFn func(*rpc.TypedData, map[string]*rpc.TypedData) (reflect.Value, erro
 
 //converter transforms to and from protobuf into native types.
 type converter struct {
-	typeBindings map[azfunc.BindingType]fromFn
+	typeBindings map[azfunc.BindingType]interface{}
 }
 
 func newConverter() converter {
 	c := converter{
-		typeBindings: map[azfunc.BindingType]fromFn{},
+		typeBindings: map[azfunc.BindingType]interface{}{},
 	}
 
-	c.typeBindings[azfunc.HTTPBinding] = ConvertToRequest
-	c.typeBindings[azfunc.HTTPTrigger] = ConvertToRequest
-	c.typeBindings[azfunc.BlobTrigger] = ConvertToBlob
-	c.typeBindings[azfunc.BlobBinding] = ConvertToBlob
-	c.typeBindings[azfunc.QueueTrigger] = ConvertToQueueMsg
-	c.typeBindings[azfunc.QueueBinding] = ConvertToQueueMsg
-	c.typeBindings[azfunc.TimerTrigger] = ConvertToTimer
-	c.typeBindings[azfunc.EventGridTrigger] = ConvertToEventGridEvent
+	c.typeBindings[azfunc.HTTPBinding] = &http.Request{}
+	c.typeBindings[azfunc.HTTPTrigger] = &http.Request{}
+	c.typeBindings[azfunc.BlobTrigger] = &azfunc.Blob{}
+	c.typeBindings[azfunc.BlobBinding] = &azfunc.Blob{}
+	c.typeBindings[azfunc.QueueTrigger] = &azfunc.QueueMsg{}
+	c.typeBindings[azfunc.QueueBinding] = &azfunc.QueueMsg{}
+	c.typeBindings[azfunc.TimerTrigger] = &azfunc.Timer{}
+	c.typeBindings[azfunc.EventGridTrigger] = &azfunc.EventGridEvent{}
 
 	return c
 }
@@ -49,11 +49,7 @@ func (c converter) FromProto(req *rpc.InvocationRequest, eventStream rpc.Functio
 	for _, input := range req.InputData {
 		param, ok := f.in[input.Name]
 		if ok {
-			v, ok := c.typeBindings[azfunc.BindingType(param.Binding.GetType())]
-			if !ok {
-				return nil, fmt.Errorf("cannot handle binding %s", param.Binding.GetType())
-			}
-			r, err := v(input.GetData(), req.GetTriggerMetadata())
+			r, err := ConvertToTypeValue(param.Type, input.GetData(), req.GetTriggerMetadata())
 			if err != nil {
 				log.Debugf("cannot transform typed binding: %v", err)
 				return nil, err
@@ -124,7 +120,7 @@ func (c converter) ToProto(values []reflect.Value, fields map[string]*funcField)
 		log.Debugf("failed to marshal, %v:", err)
 	}
 
-	log.Debugf("We have return params and not out params: %s", ret)
+	log.Debugf("return params and not out params: %s", ret)
 
 	rv := &rpc.TypedData{
 		Data: &rpc.TypedData_Json{
@@ -134,69 +130,102 @@ func (c converter) ToProto(values []reflect.Value, fields map[string]*funcField)
 	return protoData, rv, nil
 }
 
-// ConvertToRequest returns a native http.Request from an rpc.HttpTrigger
-func ConvertToRequest(d *rpc.TypedData, tm map[string]*rpc.TypedData) (reflect.Value, error) {
+// ConvertToTypeValue returns a native value from protobuf
+func ConvertToTypeValue(pt reflect.Type, data *rpc.TypedData, tm map[string]*rpc.TypedData) (reflect.Value, error) {
 
-	t, ok := d.Data.(*rpc.TypedData_Http)
+	var t reflect.Type
 
-	if !ok {
-		return reflect.Value{}, fmt.Errorf("cannot convert non http Http request")
+	log.Debugf("pt %s", pt)
+
+	if pt.Kind() == reflect.Ptr {
+		t = pt.Elem()
+	} else {
+		t = pt
 	}
 
-	if t.Http == nil {
+	pv := reflect.New(t)
+	val := pv.Elem()
+	hasTags := false
+	log.Debugf("type is %s, metadata has fields: %v", t, tm)
+	for i := 0; i < val.NumField(); i++ {
+		tag := t.Field(i).Tag.Get("json")
+		log.Debugf("Decoding for field: %s and fieldValue value: %v", t.Field(i), val.Field(i))
+
+		var td *rpc.TypedData
+
+		if tag != "" {
+			hasTags = true
+		}
+		if tag == "data" {
+			td = data
+		} else if _, ok := tm[tag]; ok {
+			td = tm[tag]
+		} else {
+			continue
+		}
+		d, err := decodeProto(td)
+
+		if err != nil {
+			return reflect.Value{}, err
+		}
+		val.Field(i).Set(d.Convert(t.Field(i).Type))
+	}
+
+	if !hasTags {
+		log.Debugf("Binding type does not have any tags, decoding directly into the type")
+		return decodeProto(data)
+	}
+	return pv, nil
+}
+
+//decodeProto returns a native value from a protobuf value
+func decodeProto(d *rpc.TypedData) (reflect.Value, error) {
+	switch d.Data.(type) {
+	case *rpc.TypedData_Json:
+		var v interface{}
+		if err := json.Unmarshal([]byte(d.GetJson()), &v); err != nil {
+			return reflect.Value{}, err
+		}
+		return reflect.ValueOf(v), nil
+	case *rpc.TypedData_String_:
+		return reflect.ValueOf(d.GetString_()), nil
+	case *rpc.TypedData_Http:
+		return decodeHTTP(d.GetHttp())
+	case *rpc.TypedData_Bytes:
+		return reflect.ValueOf(d.GetBytes()), nil
+	case *rpc.TypedData_Stream:
+		return reflect.ValueOf(d.GetStream()), nil
+	default:
+	}
+	return reflect.Value{}, fmt.Errorf("Cannot decode %v", d.Data)
+}
+
+// decodeHTTP returns a native http.Request from a typed data
+func decodeHTTP(d *rpc.RpcHttp) (reflect.Value, error) {
+
+	if d == nil {
 		return reflect.Value{}, fmt.Errorf("cannot convert nil request")
 	}
 
 	var body io.Reader
-	if t.Http.RawBody != nil {
-		switch d := t.Http.RawBody.Data.(type) {
+	if d.RawBody != nil {
+		switch d := d.RawBody.Data.(type) {
 		case *rpc.TypedData_String_:
 			body = ioutil.NopCloser(bytes.NewBufferString(d.String_))
 		}
 	}
 
-	req, err := http.NewRequest(t.Http.GetMethod(), t.Http.GetUrl(), body)
+	req, err := http.NewRequest(d.GetMethod(), d.GetUrl(), body)
 
 	if err != nil {
 		return reflect.Value{}, err
 	}
 
-	for key, value := range t.Http.GetHeaders() {
+	for key, value := range d.GetHeaders() {
 		req.Header.Set(key, value)
 	}
 
 	return reflect.ValueOf(req), nil
-}
-
-// ConvertToBlob returns a formatted Blob from an rpc.TypedData_String (as blob inputs are for now)
-func ConvertToBlob(d *rpc.TypedData, tm map[string]*rpc.TypedData) (reflect.Value, error) {
-
-	t, ok := d.Data.(*rpc.TypedData_String_)
-
-	if !ok {
-		return reflect.Value{}, fmt.Errorf("cannot convert blob input")
-	}
-
-	b := &azfunc.Blob{
-		Data: t.String_,
-	}
-
-	return reflect.ValueOf(b), nil
-}
-
-// ConvertToQueueMsg returns a formatted Queue from an rpc.TypedData_String
-func ConvertToQueueMsg(d *rpc.TypedData, tm map[string]*rpc.TypedData) (reflect.Value, error) {
-	t, ok := d.Data.(*rpc.TypedData_String_)
-
-	if !ok {
-		return reflect.Value{}, fmt.Errorf("cannot convert queue message input")
-	}
-
-	qm := &azfunc.QueueMsg{
-		Text: t.String_,
-	}
-
-	return reflect.ValueOf(qm), nil
 }
 
 //ConvertToTimer returns a formatted TimerInput from an rpc.
