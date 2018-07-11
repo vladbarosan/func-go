@@ -1,0 +1,11 @@
+{
+  "entryPoint": "Run",
+  "bindings": [
+    {
+      "type": "eventGridTrigger",
+      "direction": "in",
+      "name": "event"
+    }
+  ],
+  "disabled": false
+}
