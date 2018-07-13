@@ -1,29 +1,29 @@
 
 ARG NAMESPACE=microsoft
-ARG HOST_TAG=2.0
-ARG MODE="dev"
+ARG HOST_TAG=dev-nightly
 
-#start from golang 1.10 (as multiple plugins with same package name fails in golang-1.9.x)
+#Install any extension used
+FROM microsoft/dotnet:2.1-sdk AS dotnet-env
+COPY sample /sample
+RUN dotnet build /sample -o bin
+
 FROM golang:1.10 as golang-env
 
 WORKDIR /go/src/github.com/Azure/azure-functions-go-worker
 COPY . .
-
+COPY --from=dotnet-env /sample ./sample
+RUN ls -R ./sample
 RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 RUN dep ensure -vendor-only
+RUN chmod +x ./build-native.sh
+RUN ./build-native.sh
 
-# The -gcflags "all=-N -l" flag helps us get a better debug experience
-RUN go build -gcflags "-N -l" -o golang/golang-worker
 
-# This is prod
-#RUN go build -o golang/golang-worker
-
-# Compile Delve
-RUN go get github.com/derekparker/delve/cmd/dlv
-
+# Build runtime + worker image
 FROM ${NAMESPACE}/azure-functions-base:${HOST_TAG}
 
 # copy the worker in the pre-defined path
-COPY --from=golang-env /go/src/github.com/Azure/azure-functions-go-worker/golang /azure-functions-host/workers/golang/
-
-COPY --from=golang-env /go/bin/dlv /
+COPY --from=golang-env /go/src/github.com/Azure/azure-functions-go-worker/workers/golang /azure-functions-host/workers/golang/
+# copy the samples in the pre-defined path
+COPY --from=golang-env /go/src/github.com/Azure/azure-functions-go-worker/sample /home/site/wwwroot
+ENV workers:golang:path /azure-functions-host/workers/golang/start.sh

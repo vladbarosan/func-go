@@ -4,18 +4,57 @@ This project aims to add Golang support for Azure Functions.
 
 ## How to run the sample
 
-- build the the worker:
-  - `docker build -t azure-functions-go-worker-dev .`
-- build the sample:
-  - `docker run -it -v ${PWD}:/go/src/github.com/Azure/azure-functions-go-worker -w /go/src/github.com/Azure/azure-functions-go-worker golang:1.10 /bin/bash -c "go build -buildmode=plugin -o sample/${SampleName}/${SampleName}.so sample/${SampleName}/main.go"`
-- run the worker with the sample
-  - `docker run -v ${PWD}/sample/HttpTriggerGo:/home/site/wwwroot/HttpTriggerGo -p 81:80 azure-functions-go-worker-dev`
+### Running containerized runtime with the worker
 
-Then, if you go to `localhost:81/api/HttpTriggerGo`, your `Run` method from the sample should be executed.
+- Build the docker image - `docker build --rm -f Dockerfile -t azure-functions-go-worker:latest .`
+- Run the container - `docker run --rm -p 81:80 -e AzureWebJobsStorage=$YOUR_STORAGE_ACCOUNT_KEY azure-functions-go-worker`
 
-Things to notice:
+### Running locally
 
-- `entryPoint` - this is the name of the function used as entrypioint
+- Build the worker and the samples - `build.sh`
+- Get the [functions runtime](https://github.com/Azure/azure-functions-host) from and follow the instructions there for setting it up
+
+  - Set the variables:
+
+    - `AzureWebJobsScriptRoot` - needs to point to where the function app is
+    - `FUNCTIONS_WORKER_RUNTIME` - needs to be `"golang"`
+    - `AzureWebJobsStorage` - needs to be your Azure Storage Account Connection String
+    - In the `appsettings.json` file of the runtime set the worker directory:
+
+```json
+"langaugeWorkers": {
+  "workersDirectory":
+     "/home/vladdb/go/src/github.com/Azure/azure-functions-go-worker/workers"
+}
+```
+
+Then, using a [REST API Client](https://www.getpostman.com/apps), if you execute a POST call to go to `localhost:81/api/HttpTrigger?name=vladdb` and with a body property called `password`, your `Run` method from the `HttpTrigger` should be executed.
+
+## Sample function
+
+- See the [Wiki](https://github.com/Azure/azure-functions-go-worker/wiki) for mode details on the programming model.
+
+Taking the simplest of the samples for an Http Trigger, The `function.json` looks like:
+
+```json
+{
+  "entryPoint": "Run",
+  "bindings": [
+    {
+      "authLevel": "anonymous",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req"
+    },
+    {
+      "name": "$return",
+      "type": "http",
+      "direction": "out"
+    }
+  ],
+  "disabled": false
+}
+```
 
 Now let's see the Golang function:
 
@@ -23,26 +62,46 @@ Now let's see the Golang function:
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/Azure/azure-functions-go-worker/azfunc"
 )
 
 // Run is the entrypoint to our Go Azure Function - if you want to change it, see function.json
-func Run(ctx azfunc.Context, req *http.Request, inBlob *azfunc.Blob) (outBlob string) {
+func Run(ctx azfunc.Context, req *http.Request) User {
+	ctx.Logger.Log("Log message from function %v, invocation %v to the runtime", ctx.FunctionID, ctx.InvocationID)
+	body, _ := ioutil.ReadAll(req.Body)
+	var data map[string]interface{}
+	_ = json.Unmarshal(body, &data)
 
-	ctx.Logger.Log("function id: %s, invocation id: %s with blob : %v", ctx.FunctionID, ctx.InvocationID, *inBlob)
+	name := req.URL.Query().Get("name")
+	u := User{
+		Name:          name,
+		GeneratedName: fmt.Sprintf("%s-azfunc", name),
+		Password:      data["password"].(string),
+	}
 
-	outBlob = inBlob.Content
-	return
+	return u
+}
+
+// User mocks any struct (or pointer to struct) you might want to return
+type User struct {
+	Name          string
+	GeneratedName string
+	Password      string
 }
 ```
 
 Things to notice:
 
-- we can use any vendored dependencies we might have available at compile time (everything is packaged as a Golang plugin)
+- `entryPoint` - this is the name of the function used as entry point. This needs to match the function name.
+- `main.go` - this needs to be the name of the file containing the entry point.
+- we can use any vendored dependencies we might have available at compile time (everything is packaged as a Golang plugin).
 - the name of the function is `Run` - can be changed, just remember to do the same in `function.json`
-- the function signature - `func Run(req *http.Request, ctx *azfunc.Context) User`. Based on the `function.json` file, `ctx`, `req`, and `inBlob` are automatically populated by the worker.
+- the function signature - `func Run(ctx azfunc.Context, req *http.Request) User`. Based on the `function.json` file, `ctx`, `req`, and `inBlob` are automatically populated by the worker. Note that there is no implicit dependency on the types provided by the worker in the `azfunc` package! ( Does can be copied and modified or anything else that matches the GRPC protocol can be used.)
 
   > **The content of the parameters is populated based on the name of the parameter! You can change the order, but the name has to be consistent with the name of the binding defined in `function.json`!**
 
