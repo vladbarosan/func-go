@@ -2,12 +2,14 @@
 
 This project aims to add Golang support for Azure Functions.
 
-## How to run the sample
+## How to run the Go Functions Worker
 
 ### Running containerized runtime with the worker
 
-- Build the docker image - `docker build --rm -f Dockerfile -t azure-functions-go-worker:latest .`
-- Run the container - `docker run --rm -p 81:80 -e AzureWebJobsStorage=$YOUR_STORAGE_ACCOUNT_KEY azure-functions-go-worker`
+- Build the docker image
+  - `docker build --rm -f Dockerfile -t azure-functions-go-worker .`
+- Run the container
+  - `docker run --rm -p 81:80 -e AzureWebJobsStorage="$STORAGE_ACCOUNT_CONN_STRING" azure-functions-go-worker`
 
 ### Running locally
 
@@ -30,7 +32,7 @@ This project aims to add Golang support for Azure Functions.
 
 Then, using a [REST API Client](https://www.getpostman.com/apps), if you execute a POST call to go to `localhost:81/api/HttpTrigger?name=vladdb` and with a body property called `password`, your `Run` method from the `HttpTrigger` should be executed.
 
-## Sample function
+## Sample Go Function
 
 - See the [Wiki](https://github.com/Azure/azure-functions-go-worker/wiki) for mode details on the programming model.
 
