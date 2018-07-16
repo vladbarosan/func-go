@@ -10,13 +10,12 @@ RUN dotnet build /sample -o bin
 FROM golang:1.10 as golang-env
 
 WORKDIR /go/src/github.com/Azure/azure-functions-go-worker
+ENV DEP_RELEASE_TAG=v0.4.1
 COPY . .
 COPY --from=dotnet-env /sample ./sample
-RUN ls -R ./sample
-RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+RUN  curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 RUN dep ensure -vendor-only
-RUN chmod +x ./build-native.sh
-RUN ./build-native.sh
+RUN chmod +x ./build-native.sh && ./build-native.sh
 
 
 # Build runtime + worker image
