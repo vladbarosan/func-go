@@ -1,28 +1,35 @@
-
-ARG NAMESPACE=microsoft
-ARG HOST_TAG=dev-nightly
-
-#Install any extension used
+ARG RUNTIME_IMAGE=microsoft/azure-functions-base:dev-nightly
+# steps are: 1) build extensions, 2) build worker, 3) copy artifacts to runtime image
+# 1. build extensions with dotnet
 FROM microsoft/dotnet:2.1-sdk AS dotnet-env
 COPY sample /sample
 RUN dotnet build /sample -o bin
 
+# 2. build worker with go
 FROM golang:1.10 as golang-env
-
 WORKDIR /go/src/github.com/Azure/azure-functions-go-worker
 ENV DEP_RELEASE_TAG=v0.4.1
 COPY . .
 COPY --from=dotnet-env /sample ./sample
-RUN  curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-RUN dep ensure -vendor-only
-RUN chmod +x ./build-native.sh && ./build-native.sh
+RUN ls -R ./sample
+RUN curl -sSL https://raw.githubusercontent.com/golang/dep/master/install.sh | sh \
+    && dep ensure -v -vendor-only \
+    && chmod +x ./build-native.sh \
+    && ./build-native.sh
 
+# 3. copy built worker and extensions to runtime image
+# ARG instructions used here must be declared before first FROM
+FROM ${RUNTIME_IMAGE}
 
-# Build runtime + worker image
-FROM ${NAMESPACE}/azure-functions-base:${HOST_TAG}
+# copy worker to predefined path
+COPY --from=golang-env \
+    /go/src/github.com/Azure/azure-functions-go-worker/workers/golang \
+    /azure-functions-host/workers/golang/
 
-# copy the worker in the pre-defined path
-COPY --from=golang-env /go/src/github.com/Azure/azure-functions-go-worker/workers/golang /azure-functions-host/workers/golang/
-# copy the samples in the pre-defined path
-COPY --from=golang-env /go/src/github.com/Azure/azure-functions-go-worker/sample /home/site/wwwroot
+# copy samples to predefined path
+COPY --from=golang-env \
+    /go/src/github.com/Azure/azure-functions-go-worker/sample \
+    /home/site/wwwroot
+
+# use predefined env var names to point to worker start script
 ENV workers:golang:path /azure-functions-host/workers/golang/start.sh
