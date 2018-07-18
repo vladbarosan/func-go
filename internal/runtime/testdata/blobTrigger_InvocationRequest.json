@@ -1,0 +1,24 @@
+{
+  "invocation_id": "57e52b4a-eee7-4127-a0c8-506cbb44c596",
+  "function_id": "b07da509-171a-4b18-a5cf-453d02e15c4f",
+  "input_data": [
+    { "name": "blob", "data": { "string": "blob content test input" } }
+  ],
+  "trigger_metadata": {
+    "BlobTrigger": { "string": "demo/testblob.txt" },
+    "Uri": {
+      "json":
+        "\"https://samplestorageaccount.blob.core.windows.net:443/demo/testblob.txt\""
+    },
+    "Properties": {
+      "json":
+        "{\"CacheControl\":null,\"ContentDisposition\":null,\"ContentEncoding\":null,\"ContentLanguage\":null,\"Length\":18,\"ContentMD5\":\"LRhNxuDmIGXy0KzNoxj9bg==\",\"ContentType\":\"text/plain\",\"ETag\":\"\\\"0x8D5EC8302DB81F9\\\"\",\"LastModified\":\"2018-07-18T07:49:37+00:00\",\"BlobType\":2,\"LeaseStatus\":2,\"LeaseState\":1,\"LeaseDuration\":0,\"PageBlobSequenceNumber\":null,\"AppendBlobCommittedBlockCount\":null,\"IsServerEncrypted\":true,\"IsIncrementalCopy\":false,\"StandardBlobTier\":0,\"RehydrationStatus\":null,\"PremiumPageBlobTier\":null,\"BlobTierInferred\":false,\"BlobTierLastModifiedTime\":null}"
+    },
+    "Metadata": { "json": "{}" },
+    "name": { "string": "testblob.txt" },
+    "sys": {
+      "json":
+        "{\"MethodName\":\"BlobTrigger\",\"UtcNow\":\"2018-07-18T07:49:51.6208404Z\",\"RandGuid\":\"6d1cdaf0-f3ac-456e-9e78-d6b371dd9b17\"}"
+    }
+  }
+}

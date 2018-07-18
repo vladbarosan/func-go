@@ -1,0 +1,8 @@
+{
+  "invocation_id": "72909447-98e1-4e17-8993-b9286df1017b",
+  "function_id": "9b698aa3-e9cd-4a7b-b651-ea8d44b57a56",
+  "input_data": [
+    { "name": "inBlob", "data": { "string": "sample input blob content" } }
+  ],
+  "trigger_metadata": {}
+}

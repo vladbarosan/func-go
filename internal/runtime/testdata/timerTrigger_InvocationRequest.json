@@ -1,0 +1,20 @@
+{
+  "invocation_id": "663858ed-c036-43aa-94da-ed16f1bca91c",
+  "function_id": "9e72fcf6-c756-469d-9863-70aabd245944",
+  "input_data": [
+    {
+      "name": "timer",
+      "data": {
+        "json":
+          "{\"Schedule\":{},\"ScheduleStatus\":{\"Last\":\"2018-07-18T01:44:03.4355015+00:00\",\"Next\":\"2018-07-18T01:45:00+00:00\",\"LastUpdated\":\"2018-07-18T01:44:03.4355015+00:00\"},\"IsPastDue\":false}"
+      }
+    }
+  ],
+  "trigger_metadata": {
+    "TimerTrigger": { "string": "7/18/18 1:45:00 AM" },
+    "sys": {
+      "json":
+        "{\"MethodName\":\"TimerTrigger\",\"UtcNow\":\"2018-07-18T01:45:00.03911Z\",\"RandGuid\":\"41dbca1f-b816-454a-b78c-7dbfba35fb39\"}"
+    }
+  }
+}

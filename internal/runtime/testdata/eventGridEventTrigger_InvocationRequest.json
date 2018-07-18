@@ -1,0 +1,23 @@
+{
+  "invocation_id": "ebecafd8-962e-4ee4-94a2-45ead4d72590",
+  "function_id": "309b5481-ca0a-4b53-b7cb-60c327caf640",
+  "input_data": [
+    {
+      "name": "event",
+      "data": {
+        "json":
+          "{\n  \"topic\": \"/subscriptions/7127e532-e730-40dd-acda-0ca1105c1e55/resourceGroups/valddFunctionGo/providers/Microsoft.Storage/storageAccounts/vladdbblobstorage\",\n  \"subject\": \"/blobServices/default/containers/testcontainerblob/blobs/testblob.txt\",\n  \"eventType\": \"Microsoft.Storage.BlobCreated\",\n  \"eventTime\": \"2018-07-04T01:43:58.6171715Z\",\n  \"id\": \"71fd4516-701e-005b-0b38-135eb80633b3\",\n  \"data\": {\n    \"api\": \"PutBlockList\",\n    \"clientRequestId\": \"58648a86-5e00-49fc-b1b1-e9bd6e98a025\",\n    \"requestId\": \"71fd4516-701e-005b-0b38-135eb8000000\",\n    \"eTag\": \"0x8D5E14F9C71C823\",\n    \"contentType\": \"text/plain\",\n    \"contentLength\": 18,\n    \"blobType\": \"BlockBlob\",\n    \"url\": \"https://vladdbblobstorage.blob.core.windows.net/testcontainerblob/testblob.txt\",\n    \"sequencer\": \"00000000000000000000000000000F0A00000000000b67b2\", \n \"storageDiagnostics\": {\n    \"batchId\": \"6f7a849b-7647-4e15-89de-962addd81215\"\n  } \n },\n  \"dataVersion\": \"\",\n  \"metadataVersion\": \"1\"\n}"
+      }
+    }
+  ],
+  "trigger_metadata": {
+    "data": {
+      "json":
+        "{\n  \"api\": \"PutBlockList\",\n  \"clientRequestId\": \"58648a86-5e00-49fc-b1b1-e9bd6e98a025\",\n  \"requestId\": \"71fd4516-701e-005b-0b38-135eb8000000\",\n  \"eTag\": \"0x8D5E14F9C71C823\",\n  \"contentType\": \"text/plain\",\n  \"contentLength\": 18,\n  \"blobType\": \"BlockBlob\",\n  \"url\": \"https://vladdbblobstorage.blob.core.windows.net/testcontainerblob/testblob.txt\",\n  \"sequencer\": \"00000000000000000000000000000F0A00000000000b67b2\",\n  \"storageDiagnostics\": {\n    \"batchId\": \"6f7a849b-7647-4e15-89de-962addd81215\"\n  }\n}"
+    },
+    "sys": {
+      "json":
+        "{\"MethodName\":\"EventGridTrigger\",\"UtcNow\":\"2018-07-18T08:21:37.2156855Z\",\"RandGuid\":\"cd954324-9246-416a-9778-abe312b4e632\"}"
+    }
+  }
+}

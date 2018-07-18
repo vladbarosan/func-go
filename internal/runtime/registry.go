@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"context"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -8,21 +9,21 @@ import (
 	"plugin"
 	"reflect"
 
+	"github.com/Azure/azure-functions-go-worker/azfunc"
+	"github.com/Azure/azure-functions-go-worker/internal/logger"
 	"github.com/Azure/azure-functions-go-worker/internal/rpc"
 	log "github.com/Sirupsen/logrus"
 )
 
 // Registry contains all information about user functions and how to execute them
 type Registry struct {
-	funcs     map[string]*function
-	converter converter
+	funcs map[string]*function
 }
 
 // NewRegistry returns a new function registry
 func NewRegistry() *Registry {
 	return &Registry{
-		funcs:     map[string]*function{},
-		converter: newConverter(),
+		funcs: map[string]*function{},
 	}
 }
 
@@ -70,17 +71,33 @@ func (r Registry) ExecuteFunc(req *rpc.InvocationRequest, eventStream rpc.Functi
 		return ir
 	}
 
-	params, err := r.converter.FromProto(req, eventStream, f)
+	args, err := FromProto(req, f.in)
 	if err != nil {
 		ir.Result.Status = rpc.StatusResult_Failure
 		return ir
 	}
+
+	params := make([]reflect.Value, len(f.in))
+	for _, v := range f.in {
+		if v.Type == reflect.TypeOf((azfunc.Context{})) {
+			ctx := azfunc.Context{
+				Context:      context.Background(),
+				FunctionID:   req.FunctionId,
+				InvocationID: req.InvocationId,
+				Logger:       logger.NewLogger(eventStream, req.InvocationId),
+			}
+			params[v.Position] = reflect.ValueOf(ctx)
+		} else {
+			params[v.Position] = args[v.Name]
+		}
+	}
+
 	output, err := f.Invoke(params)
 	if err != nil {
 		ir.Result.Status = rpc.StatusResult_Failure
 		return ir
 	}
-	o, rv, err := r.converter.ToProto(output, f.out)
+	o, rv, err := ToProto(output, f.out)
 
 	if err != nil {
 		log.Debugf("cannot get output data from result %v", err)

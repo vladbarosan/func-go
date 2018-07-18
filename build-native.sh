@@ -19,8 +19,7 @@ samples=(
 
 for i in "${samples[@]}"; do
    echo "building $i"
-   env GOOS=linux GOARCH=amd64 go build \
-        -buildmode=plugin -o "sample/$i/bin/$i.so" "sample/$i/main.go"
+   env GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -buildmode=plugin -o "sample/$i/bin/$i.so" "sample/$i/main.go"
    echo "$i built"
 done
 

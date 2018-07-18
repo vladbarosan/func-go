@@ -1,0 +1,14 @@
+{
+  "invocation_id": "188df045-cdd6-4957-9645-50be548eae6f",
+  "function_id": "04add3a4-cd9c-45bd-b534-0bd5728dab8b",
+  "input_data": [
+    {
+      "name": "in",
+      "data": {
+        "json":
+          "{\n  \"name\": \"bestnametest\",\n  \"PartitionKey\": \"Test\",\n  \"RowKey\": \"testKey\"\n}"
+      }
+    }
+  ],
+  "trigger_metadata": {}
+}

@@ -1,0 +1,20 @@
+{
+  "invocation_id": "ad7a8dac-dce6-447e-92cc-0e9fa2c6aad8",
+  "function_id": "57bef0ec-1e9a-41da-918e-7e4310ef63e9",
+  "input_data": [
+    { "name": "queueMsg", "data": { "string": "test queue msg" } }
+  ],
+  "triggerMetadata": {
+    "QueueTrigger": { "string": "test queue msg" },
+    "DequeueCount": { "json": "1" },
+    "ExpirationTime": { "json": "\"2018-07-25T08:15:08+00:00\"" },
+    "Id": { "string": "38c00d86-c30c-4a48-aff5-deafb4b273e4" },
+    "InsertionTime": { "json": "\"2018-07-18T08:15:08+00:00\"" },
+    "NextVisibleTime": { "json": "\"2018-07-18T08:25:15+00:00\"" },
+    "PopReceipt": { "string": "AgAAAAMAAAAAAAAASsWZ2nAe1AE=" },
+    "sys": {
+      "json":
+        "{\"MethodName\":\"QueueTrigger\",\"UtcNow\":\"2018-07-18T08:15:23.5633464Z\",\"RandGuid\":\"7c19ff5f-1981-41da-b977-5c4fe46b2793\"}"
+    }
+  }
+}

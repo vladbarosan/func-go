@@ -2,7 +2,6 @@ package runtime
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,32 +9,20 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/Azure/azure-functions-go-worker/azfunc"
-	"github.com/Azure/azure-functions-go-worker/internal/logger"
 	"github.com/Azure/azure-functions-go-worker/internal/rpc"
 	log "github.com/Sirupsen/logrus"
 )
 
-//converter transforms to and from protobuf into native types.
-
-type converter struct {
-}
-
-func newConverter() converter {
-	c := converter{}
-	return c
-}
-
 //FromProto converts protobuf parameters to golang values
-func (c converter) FromProto(req *rpc.InvocationRequest, eventStream rpc.FunctionRpc_EventStreamClient, f *function) ([]reflect.Value, error) {
+func FromProto(req *rpc.InvocationRequest, fields map[string]*funcField) (map[string]reflect.Value, error) {
 	args := make(map[string]reflect.Value)
 
 	// iterate through the invocation request input data
 	// if the name of the input data is in the function bindings, then attempt to get the typed binding
 	for _, input := range req.InputData {
-		param, ok := f.in[input.Name]
+		param, ok := fields[input.Name]
 		if ok {
-			r, err := ConvertToTypeValue(param.Type, input.GetData(), req.GetTriggerMetadata())
+			r, err := convertToTypeValue(param.Type, input.GetData(), req.GetTriggerMetadata())
 			if err != nil {
 				log.Debugf("cannot transform typed binding: %v", err)
 				return nil, err
@@ -50,26 +37,11 @@ func (c converter) FromProto(req *rpc.InvocationRequest, eventStream rpc.Functio
 
 	log.Debugf("args map: %v", args)
 
-	params := make([]reflect.Value, len(f.in))
-	for _, v := range f.in {
-		if v.Type == reflect.TypeOf((azfunc.Context{})) {
-			ctx := azfunc.Context{
-				Context:      context.Background(),
-				FunctionID:   req.FunctionId,
-				InvocationID: req.InvocationId,
-				Logger:       logger.NewLogger(eventStream, req.InvocationId),
-			}
-			params[v.Position] = reflect.ValueOf(ctx)
-		} else {
-			params[v.Position] = args[v.Name]
-		}
-	}
-
-	return params, nil
+	return args, nil
 }
 
 //ToProto converts Values to grpc protocol results
-func (c converter) ToProto(values []reflect.Value, fields map[string]*funcField) ([]*rpc.ParameterBinding, *rpc.TypedData, error) {
+func ToProto(values []reflect.Value, fields map[string]*funcField) ([]*rpc.ParameterBinding, *rpc.TypedData, error) {
 	protoData := make([]*rpc.ParameterBinding, len(fields))
 
 	for _, v := range fields {
@@ -116,8 +88,8 @@ func (c converter) ToProto(values []reflect.Value, fields map[string]*funcField)
 	return protoData, rv, nil
 }
 
-// ConvertToTypeValue returns a native value from protobuf
-func ConvertToTypeValue(pt reflect.Type, data *rpc.TypedData, tm map[string]*rpc.TypedData) (reflect.Value, error) {
+// convertToTypeValue returns a native value from protobuf
+func convertToTypeValue(pt reflect.Type, data *rpc.TypedData, tm map[string]*rpc.TypedData) (reflect.Value, error) {
 
 	var t reflect.Type
 
@@ -224,38 +196,4 @@ func decodeHTTP(d *rpc.RpcHttp) (reflect.Value, error) {
 	}
 
 	return reflect.ValueOf(req), nil
-}
-
-//ConvertToTimer returns a formatted TimerInput from an rpc.
-func ConvertToTimer(d *rpc.TypedData, tm map[string]*rpc.TypedData) (reflect.Value, error) {
-
-	t, ok := d.Data.(*rpc.TypedData_Json)
-
-	if !ok {
-		return reflect.Value{}, fmt.Errorf("cannot convert non json timer")
-	}
-
-	timer := &azfunc.Timer{}
-	if err := json.Unmarshal([]byte(t.Json), &timer); err != nil {
-		return reflect.Value{}, fmt.Errorf("cannot unmarshal timer object")
-	}
-
-	return reflect.ValueOf(timer), nil
-}
-
-// ConvertToEventGridEvent returns an EventGridEvent
-func ConvertToEventGridEvent(d *rpc.TypedData, tm map[string]*rpc.TypedData) (reflect.Value, error) {
-
-	t, ok := d.Data.(*rpc.TypedData_Json)
-
-	if !ok {
-		return reflect.Value{}, fmt.Errorf("cannot convert non json event grid event input")
-	}
-
-	e := &azfunc.EventGridEvent{}
-	if err := json.Unmarshal([]byte(t.Json), &e); err != nil {
-		return reflect.Value{}, fmt.Errorf("cannot unmarshal event grid event object")
-	}
-
-	return reflect.ValueOf(e), nil
 }

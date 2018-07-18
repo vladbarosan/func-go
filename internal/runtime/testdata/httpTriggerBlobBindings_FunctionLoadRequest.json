@@ -1,0 +1,14 @@
+{
+  "function_id": "81e8326d-75d2-40b1-a65e-90c95acffb2a",
+  "metadata": {
+    "directory": "testdata/HttpTriggerBlobBindings",
+    "script_file": "testdata/HttpTriggerBlobBindings/main.go",
+    "entry_point": "Run",
+    "name": "HttpTriggerBlobBindings",
+    "bindings": {
+      "req": { "type": "httpTrigger" },
+      "inBlob": { "type": "blob" },
+      "outBlob": { "type": "blob", "direction": "out" }
+    }
+  }
+}

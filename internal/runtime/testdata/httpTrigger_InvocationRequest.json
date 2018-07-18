@@ -1,0 +1,95 @@
+{
+  "invocation_id": "39bb6ec9-20b0-4fb0-b810-12b2ad19fe24",
+  "function_id": "3acb390f-471e-4342-8b91-7bd445b216cc",
+  "input_data": [
+    {
+      "name": "req",
+      "data": {
+        "http": {
+          "method": "POST",
+          "url": "http://localhost:5000/api/HttpTrigger?name=testuser",
+          "headers": {
+            "cache-control": "no-cache",
+            "connection": "keep-alive",
+            "content-type": "application/json",
+            "accept": "*/*",
+            "accept-encoding": "gzip, deflate",
+            "content-length": "57"
+          },
+          "body": {
+            "json":
+              "{\n  \"value\": \"BODY VALUE\",\n  \"password\": \"secretPassword\"\n}"
+          },
+          "query": { "name": "testuser" },
+          "rawBody": {
+            "string":
+              "{\n\t\"value\": \"BODY VALUE\",\n\t\"password\": \"secretPassword\"\n}"
+          }
+        }
+      }
+    }
+  ],
+  "trigger_metadata": {
+    "$request": {
+      "http": {
+        "method": "POST",
+        "url": "http://localhost:5000/api/HttpTrigger?name=vladdb",
+        "headers": {
+          "cache-control": "no-cache",
+          "connection": "keep-alive",
+          "content-type": "application/json",
+          "accept": "*/*",
+          "accept-encoding": "gzip, deflate",
+          "content-length": "57"
+        },
+        "body": {
+          "json":
+            "{\n  \"value\": \"BODY VALUE\",\n  \"password\": \"secretPassword\"\n}"
+        },
+        "query": { "name": "vladdb" },
+        "rawBody": {
+          "string":
+            "{\n\t\"value\": \"BODY VALUE\",\n\t\"password\": \"secretPassword\"\n}"
+        }
+      }
+    },
+    "value": { "string": "BODY VALUE" },
+    "password": { "string": "secretPassword" },
+    "name": { "string": "testuser" },
+    "Query": { "json": "{\"name\":\"testuser\"}" },
+    "Headers": {
+      "json":
+        "{\"Cache-Control\":\"no-cache\",\"Connection\":\"keep-alive\",\"Content-Type\":\"application/json\",\"Accept\":\"*/*\",\"Accept-Encoding\":\"gzip, deflate\",\"Host\":\"localhost:5000\",\"User-Agent\":\"PostmanRuntime/7.1.5\",\"Content-Length\":\"57\",\"Postman-Token\":\"a577077d-4600-4f33-8532-9c073812ee2a\"}"
+    },
+    "req": {
+      "http": {
+        "method": "POST",
+        "url": "http://localhost:5000/api/HttpTrigger?name=testuser",
+        "headers": {
+          "cache-control": "no-cache",
+          "connection": "keep-alive",
+          "content-type": "application/json",
+          "accept": "*/*",
+          "accept-encoding": "gzip, deflate",
+          "host": "localhost:5000",
+          "user-agent": "PostmanRuntime/7.1.5",
+          "content-length": "57",
+          "postman-token": "a577077d-4600-4f33-8532-9c073812ee2a"
+        },
+        "body": {
+          "json":
+            "{\n  \"value\": \"BODY VALUE\",\n  \"password\": \"secretPassword\"\n}"
+        },
+        "query": { "name": "testuser" },
+        "rawBody": {
+          "string":
+            "{\n\t\"value\": \"BODY VALUE\",\n\t\"password\": \"secretPassword\"\n}"
+        }
+      }
+    },
+    "sys": {
+      "json":
+        "{\"MethodName\":\"HttpTrigger\",\"UtcNow\":\"2018-07-17T21:38:38.2928511Z\",\"RandGuid\":\"027073f0-8359-4a1d-aa02-d5392ba8be56\"}"
+    }
+  }
+}
