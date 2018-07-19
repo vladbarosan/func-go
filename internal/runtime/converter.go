@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"strings"
 
 	"github.com/Azure/azure-functions-go-worker/internal/rpc"
 	log "github.com/Sirupsen/logrus"
@@ -45,19 +46,15 @@ func ToProto(values []reflect.Value, fields map[string]*funcField) ([]*rpc.Param
 	protoData := make([]*rpc.ParameterBinding, len(fields))
 
 	for _, v := range fields {
-
-		b, err := json.Marshal(values[v.Position].Interface())
+		b := values[v.Position]
+		d, err := encodeProto(b)
 		if err != nil {
-			log.Debugf("failed to marshal, %v:", err)
+			log.Debugf("failed to encode output binding :%s , %v:", v.Name, err)
+			d = &rpc.TypedData{}
 		}
-
 		protoData[v.Position] = &rpc.ParameterBinding{
 			Name: v.Name,
-			Data: &rpc.TypedData{
-				Data: &rpc.TypedData_Json{
-					Json: string(b),
-				},
-			},
+			Data: d,
 		}
 	}
 
@@ -70,22 +67,39 @@ func ToProto(values []reflect.Value, fields map[string]*funcField) ([]*rpc.Param
 		return nil, nil, fmt.Errorf("Expected 1 or 2 anonymous return values, got %d", len(values))
 	}
 
-	ret := ""
+	log.Debugf("return params and not out params: %v", values[0].Interface())
 
-	b, err := json.Marshal(values[0].Interface())
-	ret = string(b)
-	if err != nil {
-		log.Debugf("failed to marshal, %v:", err)
+	rv, err := encodeProto(values[0])
+
+	return protoData, rv, err
+}
+
+//decodeProto returns protobuf value from a native value
+func encodeProto(v reflect.Value) (*rpc.TypedData, error) {
+
+	switch tv := v.Interface().(type) {
+	case *http.Response:
+		resp, err := encodeHTTP(tv)
+		if err != nil {
+			log.Debugf("failed to encode http, %v:", err)
+			return nil, err
+		}
+		return &rpc.TypedData{
+			Data: &rpc.TypedData_Http{
+				Http: resp,
+			},
+		}, nil
+	default:
+		b, err := json.Marshal(tv)
+		if err != nil {
+			log.Debugf("failed to marshal, %v:", err)
+			return nil, err
+		}
+		return &rpc.TypedData{
+			Data: &rpc.TypedData_Json{
+				Json: string(b),
+			}}, nil
 	}
-
-	log.Debugf("return params and not out params: %s", ret)
-
-	rv := &rpc.TypedData{
-		Data: &rpc.TypedData_Json{
-			Json: ret,
-		},
-	}
-	return protoData, rv, nil
 }
 
 // convertToTypeValue returns a native value from protobuf
@@ -168,6 +182,33 @@ func decodeProto(d *rpc.TypedData, t reflect.Type) (reflect.Value, error) {
 	default:
 	}
 	return reflect.Value{}, fmt.Errorf("Cannot decode %v", d.Data)
+}
+
+// encodeHTTP returns a protobuf Http type from a *http.Response
+func encodeHTTP(r *http.Response) (*rpc.RpcHttp, error) {
+	resp := &rpc.RpcHttp{}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.RawBody = &rpc.TypedData{
+		Data: &rpc.TypedData_String_{
+			String_: string(body),
+		},
+	}
+	// For now return body as a string also
+	resp.Body = &rpc.TypedData{
+		Data: &rpc.TypedData_String_{
+			String_: string(body),
+		},
+	}
+	resp.Headers = make(map[string]string, len(r.Header))
+	for key, value := range r.Header {
+		resp.Headers[key] = strings.Join(value, ",")
+	}
+	resp.StatusCode = r.Status
+	return resp, nil
 }
 
 // decodeHTTP returns a native http.Request from a typed data

@@ -10,6 +10,7 @@ docker run -it \
 # build samples
 samples=(
     "HttpTrigger"
+    "HttpTriggerHttpResponse"
     "HttpTriggerBlobBindings"
     "HttpTriggerQueueBindings"
     "HttpTriggerTableBindings"

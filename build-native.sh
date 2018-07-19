@@ -8,6 +8,7 @@ echo "worker built"
 echo "building samples..."
 samples=(
     "HttpTrigger"
+    "HttpTriggerHttpResponse"
     "HttpTriggerBlobBindings"
     "HttpTriggerQueueBindings"
     "HttpTriggerTableBindings"
