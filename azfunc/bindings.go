@@ -74,3 +74,13 @@ type EventGridEvent struct {
 	// DataVersion - The schema version of the data object.
 	DataVersion string `json:"dataVersion"`
 }
+
+// EventHubEvent properties of an event sent to an Event Hub.
+type EventHubEvent struct {
+	Data            string                 `json:"azfuncdata"`
+	PartitionKey    *string                `json:"PartitionKey"`
+	SequenceNumber  int                    `json:"SequenceNumber"`
+	Offset          int                    `json:"Offset"`
+	EnqueuedTimeUtc string                 `json:"EnqueuedTimeUtc"`
+	Properties      map[string]interface{} `json:"Properties"`
+}

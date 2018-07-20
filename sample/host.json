@@ -1,1 +1,7 @@
-{}
+{
+  "eventHub": {
+    "maxBatchSize": 10,
+    "prefetchCount": 256,
+    "batchCheckpointFrequency": 1
+  }
+}

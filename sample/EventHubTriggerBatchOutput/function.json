@@ -1,0 +1,20 @@
+{
+  "entryPoint": "Run",
+  "bindings": [
+    {
+      "type": "eventHubTrigger",
+      "name": "ehMsg",
+      "eventHubName": "demo-go-func-batch-in",
+      "connection": "EventHubConnectionSetting",
+      "direction": "in"
+    },
+    {
+      "type": "eventHub",
+      "name": "outMsgs",
+      "eventHubName": "demo-go-func-out",
+      "connection": "EventHubConnectionSetting",
+      "direction": "out"
+    }
+  ],
+  "disabled": false
+}

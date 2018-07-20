@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/Azure/azure-functions-go-worker/internal/rpc"
@@ -118,10 +119,12 @@ func convertToTypeValue(pt reflect.Type, data *rpc.TypedData, tm map[string]*rpc
 	pv := reflect.New(t)
 	v := pv.Elem()
 	c := 0
-	log.Debugf("type is %s, metadata has fields: %v", t, tm)
+	log.Debugf("Converting to type %s", t)
+	log.Debugf("invocation metadata fields: %v", t, tm)
+
 	for i := 0; t.Kind() == reflect.Struct && i < v.NumField(); i++ {
 		tag := t.Field(i).Tag.Get("json")
-		log.Debugf("Decoding for field: %s and tag: %v", t.Field(i), tag)
+		log.Debugf("Decoding field: %s, tag: %s", t.Field(i), tag)
 
 		var td *rpc.TypedData
 
@@ -131,10 +134,10 @@ func convertToTypeValue(pt reflect.Type, data *rpc.TypedData, tm map[string]*rpc
 			c++
 		} else if _, ok := tm[tag]; ok {
 			td = tm[tag]
-			log.Debugf("Decoding runtime input metadata %v", td)
+			log.Debugf("Decoding runtime input metadata field: %v", td)
 			c++
 		} else {
-			log.Debugf("Tag %v doesnt exist or doesnt match", tag)
+			log.Debugf("Tag %s doesnt exist or doesnt match", tag)
 			continue
 		}
 		d, err := decodeProto(td, t.Field(i).Type)
@@ -163,16 +166,35 @@ func convertToTypeValue(pt reflect.Type, data *rpc.TypedData, tm map[string]*rpc
 
 //decodeProto returns a native value from a protobuf value
 func decodeProto(d *rpc.TypedData, t reflect.Type) (reflect.Value, error) {
+
+	if (d == nil || d.Data == nil) && t.Kind() == reflect.Ptr {
+		return reflect.Zero(t), nil
+	}
+
 	switch d.Data.(type) {
 	case *rpc.TypedData_Json:
-		v := reflect.New(t).Interface()
-		if err := json.Unmarshal([]byte(d.GetJson()), &v); err != nil {
+		vp := reflect.New(t).Interface()
+		if err := json.Unmarshal([]byte(d.GetJson()), &vp); err != nil {
 			return reflect.Value{}, err
 		}
-		log.Debugf("Converted to type %s and content %v", t, v)
-		return reflect.ValueOf(v).Elem(), nil
+		log.Debugf("Converted to type %s and content %v", t, vp)
+		return reflect.ValueOf(vp).Elem(), nil
 	case *rpc.TypedData_String_:
-		return reflect.ValueOf(d.GetString_()), nil
+		var v reflect.Value
+		var err error
+		switch t.Kind() {
+		case reflect.Int:
+			var c int
+			c, err = strconv.Atoi(d.GetString_())
+			if err == nil {
+				v = reflect.ValueOf(c)
+			}
+		case reflect.String:
+			v = reflect.ValueOf(d.GetString_())
+		default:
+			err = fmt.Errorf("Cannot  convert protobuf string input to type: %v", t.Name())
+		}
+		return v, err
 	case *rpc.TypedData_Http:
 		return decodeHTTP(d.GetHttp())
 	case *rpc.TypedData_Bytes:

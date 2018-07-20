@@ -17,6 +17,8 @@ worker][] for Go.
 
 `docker run --rm -p 81:80 -e AzureWebJobsStorage="$STORAGE_ACCOUNT_CONN_STRING" azure-functions-go-worker`
 
+- If you want to run the event hub samples, make sure the the Event Hub Namespace connection string as an env variable with the name spacified in the`connection` field in `function.json`. The name for the value in the samples is `EventHubConnectionSetting`.
+
 ### Build and run locally
 
 - Build the worker and the samples: `build.sh`
@@ -29,6 +31,7 @@ FUNCTIONS_WORKER_RUNTIME=golang
 AzureWebJobsScriptRoot=               # path to user functions.
 AzureWebJobsStorage=                  # Azure storage account connection string from
                                       # `az storage account show-connection-string`
+EventHubConnectionSetting=            # Event Hub Namespace connection string.
 ```
 
 - In `github.com/Azure/azure-functions-host`, modify
@@ -151,8 +154,7 @@ The `Run` method from the sample should be executed.
   into the built binary.
 - Structs in the function signature are initialized based on properties in the
   incoming event and specifications in function.json. In the example
-  signature of `func Run(ctx azfunc.Context, req *http.Request) User`; `ctx
-  azfunc.Context`, `req *http.Request` and `User` are automatically bound to
+  signature of `func Run(ctx azfunc.Context, req *http.Request) User`; `ctx azfunc.Context`, `req *http.Request` and `User` are automatically bound to
   incoming and outgoing message properties. Properties received from the GRPC
   channel are bound to properties on the Go structs, and any Go struct
   with the named properties can be used; that is, there's nothing special about
@@ -167,9 +169,9 @@ The `Run` method from the sample should be executed.
 
 ## Disclaimer
 
-* The project is in development; problems and frequent changes are expected.
-* This project has not been evaluated for production use.
-* We will reply to issues in this repo; but this project is in limited preview
+- The project is in development; problems and frequent changes are expected.
+- This project has not been evaluated for production use.
+- We will reply to issues in this repo; but this project is in limited preview
   and not otherwise supported.
 
 ## Contributing
@@ -185,7 +187,7 @@ comment). Simply follow the instructions provided by the bot. You will only
 need to do this once across all repos using our CLA.
 
 This project has adopted the [Microsoft Open Source Code of
-Conduct](https://opensource.microsoft.com/codeofconduct/).  For more
+Conduct](https://opensource.microsoft.com/codeofconduct/). For more
 information see the [Code of Conduct
 FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact
 [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional

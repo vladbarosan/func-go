@@ -16,6 +16,8 @@ samples=(
     "BlobTrigger"
     "QueueTrigger"
     "EventGridTrigger"
+    "EventHubTriggerEventHubOutput"
+    "EventHubTriggerBatchOutput"
 )
 
 for i in "${samples[@]}"; do
