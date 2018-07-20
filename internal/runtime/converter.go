@@ -43,8 +43,11 @@ func FromProto(req *rpc.InvocationRequest, fields map[string]*funcField) (map[st
 }
 
 //ToProto converts Values to grpc protocol results
-func ToProto(values []reflect.Value, fields map[string]*funcField) ([]*rpc.ParameterBinding, *rpc.TypedData, error) {
+func ToProto(values []reflect.Value, fields map[string]*funcField) ([]*rpc.ParameterBinding, *rpc.TypedData, *rpc.StatusResult, error) {
 	protoData := make([]*rpc.ParameterBinding, len(fields))
+	status := &rpc.StatusResult{
+		Status: rpc.StatusResult_Success,
+	}
 
 	for _, v := range fields {
 		b := values[v.Position]
@@ -59,20 +62,46 @@ func ToProto(values []reflect.Value, fields map[string]*funcField) ([]*rpc.Param
 		}
 	}
 
-	// If there are named parameters or no parameters at all there is no return value
+	// Check if error is returned and set it as an exception
+	errIndex := -1
+	for k, v := range values {
+		if v.Kind() != reflect.Interface {
+			continue
+		}
+		e, ok := v.Interface().(error)
+		if ok {
+			log.Debugf("Found error output at index: %d parameter %s", k, e.Error())
+			errIndex = 1
+			status.Exception = &rpc.RpcException{
+				Message: e.Error(),
+				Source:  "User function",
+			}
+			status.Status = rpc.StatusResult_Failure
+			break
+		}
+	}
+
+	// If there are named return values or no return values at all there is no return value
 	if len(fields) > 0 || len(values) == 0 {
-		return protoData, nil, nil
+		return protoData, nil, status, nil
 	}
-
+	// No support for multiple anonymous returns values
 	if len(values) > 2 {
-		return nil, nil, fmt.Errorf("Expected 1 or 2 anonymous return values, got %d", len(values))
+		return nil, nil, nil, fmt.Errorf("Expected 1 or 2 anonymous return values, got %d", len(values))
+	}
+	// If only error return, no rv
+	if len(values) == 1 && errIndex != -1 {
+		return protoData, nil, status, nil
 	}
 
-	log.Debugf("return params and not out params: %v", values[0].Interface())
+	i := 0
+	if len(values) == 2 && errIndex == 0 {
+		i = 1
+	}
 
-	rv, err := encodeProto(values[0])
-
-	return protoData, rv, err
+	log.Debugf("return params and not out params: %v", values[i].Interface())
+	rv, err := encodeProto(values[i])
+	return protoData, rv, status, err
 }
 
 //decodeProto returns protobuf value from a native value
@@ -229,7 +258,7 @@ func encodeHTTP(r *http.Response) (*rpc.RpcHttp, error) {
 	for key, value := range r.Header {
 		resp.Headers[key] = strings.Join(value, ",")
 	}
-	resp.StatusCode = r.Status
+	resp.StatusCode = strconv.Itoa(r.StatusCode)
 	return resp, nil
 }
 

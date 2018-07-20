@@ -18,6 +18,7 @@ samples=(
     "HttpTriggerBlobBindings"
     "HttpTriggerQueueBindings"
     "HttpTriggerTableBindings"
+    "HttpTriggerErrorOutput"
     "TimerTrigger"
     "BlobTrigger"
     "QueueTrigger"

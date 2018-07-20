@@ -96,7 +96,7 @@ import (
 // Run runs this Azure Function because it is specified in `function.json` as
 // the entryPoint. Fields of the function's parameters are also bound to
 // incoming and outgoing event properties as specified in `function.json`.
-func Run(ctx azfunc.Context, req *http.Request) User {
+func Run(ctx azfunc.Context, req *http.Request) (User, error) {
 
 	// additional properties are bound to ctx by Azure Functions
 	ctx.Logger.Log("function invoked: function %v, invocation %v",
@@ -112,13 +112,19 @@ func Run(ctx azfunc.Context, req *http.Request) User {
 	// get query param values
 	name := req.URL.Query().Get("name")
 
+	if name == "" {
+		u := User{}
+		err = fmt.Errorf("Missing require parameter: name")
+		return u, err
+	}
+
 	u := User{
 		Name:          name,
 		GeneratedName: fmt.Sprintf("%s-azfunc", name),
 		Password:      data["password"].(string),
 	}
 
-	return u
+	return u, nil
 }
 
 // User exemplifies a struct to be returned. You can use any struct or *struct.
@@ -142,7 +148,7 @@ Body: { "password":"mypassword" }
 
 The `Run` method from the sample should be executed.
 
-## Things to note:
+## Things to note
 
 - `function.json::entryPoint` names the Go function in package main to be used
   as the Azure Function entry point. In this example that function is named
@@ -166,6 +172,8 @@ The `Run` method from the sample should be executed.
 - You can specify a named return type, which then needs to match an output
   binding in `function.json`. Alternatively, you can have 1 unnamed return type
   which will match the special `$return` binding.
+- You can also have an optional `error` return (named or anonymous) value to signal that the function execution
+  failed for whatever reason.
 
 ## Disclaimer
 

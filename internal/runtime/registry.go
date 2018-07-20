@@ -97,7 +97,7 @@ func (r Registry) ExecuteFunc(req *rpc.InvocationRequest, eventStream rpc.Functi
 		ir.Result.Status = rpc.StatusResult_Failure
 		return ir
 	}
-	o, rv, err := ToProto(output, f.out)
+	o, rv, s, err := ToProto(output, f.out)
 
 	if err != nil {
 		log.Debugf("cannot get output data from result %v", err)
@@ -109,6 +109,7 @@ func (r Registry) ExecuteFunc(req *rpc.InvocationRequest, eventStream rpc.Functi
 
 	ir.ReturnValue = rv
 	ir.OutputData = o
+	ir.Result = s
 	return ir
 }
 
@@ -196,7 +197,7 @@ func extractFuncFields(fl *ast.FieldList, bindings map[string]*rpc.BindingInfo, 
 
 			fields[n.Name] = &funcField{
 				Name:     n.Name,
-				Type:     fi(i),
+				Type:     t,
 				Position: i,
 				Binding:  bindings[n.Name],
 			}
