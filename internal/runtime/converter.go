@@ -104,12 +104,20 @@ func ToProto(values []reflect.Value, fields map[string]*funcField) ([]*rpc.Param
 	return protoData, rv, status, err
 }
 
-//decodeProto returns protobuf value from a native value
+//encodeProto returns protobuf value from a native value
 func encodeProto(v reflect.Value) (*rpc.TypedData, error) {
 
+	if v.Type().Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return &rpc.TypedData{}, nil
+		}
+		log.Debugf("encoding pointer %s", v.Type().Name)
+		v = v.Elem()
+	}
+
 	switch tv := v.Interface().(type) {
-	case *http.Response:
-		resp, err := encodeHTTP(tv)
+	case http.Response:
+		resp, err := encodeHTTP(&tv)
 		if err != nil {
 			log.Debugf("failed to encode http, %v:", err)
 			return nil, err
@@ -169,12 +177,26 @@ func convertToTypeValue(pt reflect.Type, data *rpc.TypedData, tm map[string]*rpc
 			log.Debugf("Tag %s doesnt exist or doesnt match", tag)
 			continue
 		}
-		d, err := decodeProto(td, t.Field(i).Type)
+		var ft reflect.Type
+		if t.Field(i).Type.Kind() == reflect.Ptr {
+			ft = t.Field(i).Type.Elem()
+		} else {
+			ft = t.Field(i).Type
+		}
+		d, err := decodeProto(td, ft)
 
 		if err != nil {
 			return reflect.Value{}, err
 		}
-		v.Field(i).Set(d.Convert(t.Field(i).Type))
+
+		fv := d.Convert(ft)
+
+		if t.Field(i).Type.Kind() == reflect.Ptr {
+			v.Field(i).Set(reflect.New(ft))
+			v.Field(i).Elem().Set(fv)
+		} else {
+			v.Field(i).Set(fv)
+		}
 	}
 
 	if t.Kind() != reflect.Struct || c < t.NumField() {
@@ -183,14 +205,17 @@ func convertToTypeValue(pt reflect.Type, data *rpc.TypedData, tm map[string]*rpc
 		if err != nil {
 			return reflect.Value{}, err
 		}
-		if d.Kind() == reflect.Ptr || d.Kind() == reflect.Map {
+		if d.Kind() == reflect.Map {
 			return d, nil
 		}
 
 		v.Set(d)
 	}
 
-	return pv, nil
+	if pt.Kind() == reflect.Ptr {
+		return pv, nil
+	}
+	return v, nil
 }
 
 //decodeProto returns a native value from a protobuf value
@@ -221,7 +246,7 @@ func decodeProto(d *rpc.TypedData, t reflect.Type) (reflect.Value, error) {
 		case reflect.String:
 			v = reflect.ValueOf(d.GetString_())
 		default:
-			err = fmt.Errorf("Cannot  convert protobuf string input to type: %v", t.Name())
+			err = fmt.Errorf("Cannot convert protobuf string to type: %v", t)
 		}
 		return v, err
 	case *rpc.TypedData_Http:
@@ -287,5 +312,5 @@ func decodeHTTP(d *rpc.RpcHttp) (reflect.Value, error) {
 		req.Header.Set(key, value)
 	}
 
-	return reflect.ValueOf(req), nil
+	return reflect.ValueOf(req).Elem(), nil
 }

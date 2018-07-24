@@ -174,6 +174,7 @@ The `Run` method from the sample should be executed.
   which will match the special `$return` binding.
 - You can also have an optional `error` return (named or anonymous) value to signal that the function execution
   failed for whatever reason.
+- Having pointer types is preferred, but you can also have parameters and return values as non-pointer types for your functions!
 
 ## Disclaimer
 

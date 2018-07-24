@@ -12,7 +12,7 @@ import (
 // Run runs this Azure Function because it is specified in `function.json` as
 // the entryPoint. Fields of the function's parameters are also bound to
 // incoming and outgoing event properties as specified in `function.json`.
-func Run(ctx azfunc.Context, req *http.Request) (User, error) {
+func Run(ctx azfunc.Context, req *http.Request) (*User, error) {
 
 	// additional properties are bound to ctx by Azure Functions
 	ctx.Logger.Log("function invoked: function %v, invocation %v",
@@ -29,10 +29,10 @@ func Run(ctx azfunc.Context, req *http.Request) (User, error) {
 	name := req.URL.Query().Get("name")
 
 	if name == "" {
-		return User{}, fmt.Errorf("Missing required parameter: name")
+		return nil, fmt.Errorf("Missing required parameter: name")
 	}
 
-	u := User{
+	u := &User{
 		Name:          name,
 		GeneratedName: fmt.Sprintf("%s-azfunc", name),
 		Password:      data["password"].(string),
