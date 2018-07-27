@@ -22,19 +22,22 @@ func Run(ctx azfunc.Context, req *http.Request) (*User, error) {
 
 	// deserialize JSON content
 	var data map[string]interface{}
-	_ = json.Unmarshal(body, &data)
+	var err error
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal JSON: %s\n", err)
+	}
 
 	// get query param values
 	name := req.URL.Query().Get("name")
 
 	if name == "" {
-		return nil, fmt.Errorf("Missing required parameter: name")
+		return nil, fmt.Errorf("missing required query parameter: name")
 	}
 
 	u := &User{
-		Name:          name,
-		GeneratedName: fmt.Sprintf("%s-azfunc", name),
-		Password:      data["password"].(string),
+		Name:     name,
+		Greeting: fmt.Sprintf("Hello %s. %s\n", name, data["greeting"].(string)),
 	}
 
 	return u, nil
@@ -42,7 +45,6 @@ func Run(ctx azfunc.Context, req *http.Request) (*User, error) {
 
 // User exemplifies a struct to be returned. You can use any struct or *struct.
 type User struct {
-	Name          string
-	GeneratedName string
-	Password      string
+	Name     string
+	Greeting string
 }

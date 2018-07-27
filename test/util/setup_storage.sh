@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
+
+# prolog
 __filename=${BASH_SOURCE[0]}
 __dirname=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+# end prolog
 
-source "${__dirname}/.env"
-group_name=${AZURE_STORAGE_ACCOUNT_GROUP_NAME}
-account_name=${AZURE_STORAGE_ACCOUNT_NAME}
-location=${AZURE_LOCATION_DEFAULT}
+account_name=$1
+group_name=$2
+location=$3
 
 container_names=(demo demo-out)
 queue_name=demoqueue
@@ -19,14 +21,16 @@ az group create \
 name_available=$(az storage account check-name \
     -n $account_name \
     --query nameAvailable --output tsv)
-# if not name_available: account_name += 01
+echo "storage name $account_name available? $name_available"
 
 echo creating storage account $account_name
 account_id=$(az storage account create \
     --name $account_name \
     --resource-group $group_name \
     --location $location \
+    --sku 'Standard_LRS' \
     --query id --output tsv)
+echo "created storage account: $account_id"
 
 echo getting account key
 key=$(az storage account keys list \

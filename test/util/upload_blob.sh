@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
+# prolog
 __filename=${BASH_SOURCE[0]}
 __dirname=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-source "${__dirname}/.env"
-group_name=${AZURE_STORAGE_ACCOUNT_GROUP_NAME}
-account_name=${AZURE_STORAGE_ACCOUNT_NAME}
-location=${AZURE_LOCATION_DEFAULT}
+# end prolog
+
+# global_config
+# TODO(joshgav): replace with single ID
+declare account_name=${1}
+declare group_name=${2}
+# end global_config
 
 # shared with setup_storage.sh
 container_names=(demo demo-out)
