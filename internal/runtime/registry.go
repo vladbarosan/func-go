@@ -9,10 +9,8 @@ import (
 	"plugin"
 	"reflect"
 
-	"github.com/Azure/azure-functions-go-worker/azfunc"
-	"github.com/Azure/azure-functions-go-worker/internal/logger"
 	"github.com/Azure/azure-functions-go-worker/internal/rpc"
-	log "github.com/Sirupsen/logrus"
+	logrus "github.com/Sirupsen/logrus"
 )
 
 // Registry contains all information about user functions and how to execute them
@@ -29,7 +27,7 @@ func NewRegistry() *Registry {
 
 // LoadFunc populates information about the func from the compiled plugin and from parsing the source code
 func (r Registry) LoadFunc(req *rpc.FunctionLoadRequest) error {
-	log.Debugf("received function load request: %v", req)
+	logrus.Debugf("received function load request: %v", req)
 
 	f, err := loadFuncFromPlugin(req.Metadata)
 	if err != nil {
@@ -44,7 +42,7 @@ func (r Registry) LoadFunc(req *rpc.FunctionLoadRequest) error {
 	f.in = ins
 	f.out = outs
 
-	log.Debugf("function: %v", f)
+	logrus.Debugf("function: %v", f)
 	r.funcs[req.FunctionId] = f
 
 	return nil
@@ -53,7 +51,7 @@ func (r Registry) LoadFunc(req *rpc.FunctionLoadRequest) error {
 // ExecuteFunc takes an InvocationRequest and executes the function with corresponding function ID
 func (r Registry) ExecuteFunc(req *rpc.InvocationRequest, eventStream rpc.FunctionRpc_EventStreamClient) (response *rpc.InvocationResponse) {
 
-	log.Debugf("\n\n\nInvocation Request: %v", req)
+	logrus.Debugf("\n\n\nInvocation Request: %v", req)
 
 	status := rpc.StatusResult_Success
 
@@ -66,7 +64,7 @@ func (r Registry) ExecuteFunc(req *rpc.InvocationRequest, eventStream rpc.Functi
 	f, ok := r.funcs[req.FunctionId]
 
 	if !ok {
-		log.Debugf("function with functionID %v not loaded", req.FunctionId)
+		logrus.Debugf("function with functionID %v not loaded", req.FunctionId)
 		ir.Result.Status = rpc.StatusResult_Failure
 		return ir
 	}
@@ -79,14 +77,19 @@ func (r Registry) ExecuteFunc(req *rpc.InvocationRequest, eventStream rpc.Functi
 
 	params := make([]reflect.Value, len(f.in))
 	for _, v := range f.in {
-		if v.Type == reflect.TypeOf((azfunc.Context{})) {
-			ctx := azfunc.Context{
-				Context:      context.Background(),
-				FunctionID:   req.FunctionId,
-				InvocationID: req.InvocationId,
-				Logger:       logger.NewLogger(eventStream, req.InvocationId),
-			}
-			params[v.Position] = reflect.ValueOf(ctx)
+		isIntf := v.Type.Kind() == reflect.Interface
+		logrus.Debugf("Kind is %v  and is intf:%t and type is %v", v.Type.Kind(), isIntf, v.Type)
+		ctx := &funcContext{
+			Context:      context.Background(),
+			functionID:   req.FunctionId,
+			invocationID: req.InvocationId,
+			eventStream:  eventStream,
+		}
+		ctxv := reflect.ValueOf(ctx).Elem()
+
+		if v.Type.Kind() == reflect.Interface && ctxv.Type().Implements(v.Type) {
+			logrus.Debug("created context")
+			params[v.Position] = ctxv
 		} else {
 			params[v.Position] = args[v.Name]
 		}
@@ -100,7 +103,7 @@ func (r Registry) ExecuteFunc(req *rpc.InvocationRequest, eventStream rpc.Functi
 	o, rv, s, err := ToProto(output, f.out)
 
 	if err != nil {
-		log.Debugf("cannot get output data from result %v", err)
+		logrus.Debugf("cannot get output data from result %v", err)
 		if err != nil {
 			ir.Result.Status = rpc.StatusResult_Failure
 			return ir
@@ -111,6 +114,44 @@ func (r Registry) ExecuteFunc(req *rpc.InvocationRequest, eventStream rpc.Functi
 	ir.OutputData = o
 	ir.Result = s
 	return ir
+}
+
+// funcContext implements the azfunc.Context interface
+type funcContext struct {
+	context.Context
+	functionID   string
+	invocationID string
+	eventStream  rpc.FunctionRpc_EventStreamClient
+}
+
+func (c funcContext) FunctionID() string {
+	return c.functionID
+}
+
+func (c funcContext) InvocationID() string {
+	return c.invocationID
+}
+
+func (c funcContext) Log(level int, format string, args ...interface{}) error {
+	rpcLevel := rpc.RpcLog_Level(level)
+	if rpcLevel < rpc.RpcLog_Trace {
+		rpcLevel = rpc.RpcLog_Trace
+	}
+	if rpcLevel > rpc.RpcLog_None {
+		rpcLevel = rpc.RpcLog_Critical
+	}
+
+	l := &rpc.RpcLog{
+		InvocationId: c.invocationID,
+		Level:        rpcLevel,
+		Message:      fmt.Sprintf(format, args...),
+	}
+
+	return c.eventStream.Send(&rpc.StreamingMessage{
+		Content: &rpc.StreamingMessage_RpcLog{
+			RpcLog: l,
+		},
+	})
 }
 
 // loadFuncFromPlugin takes the compiled plugin from the func's bin directory
@@ -156,9 +197,9 @@ func loadInOut(metadata *rpc.RpcFunctionMetadata, funcType reflect.Type) (map[st
 	ast.Inspect(f, func(n ast.Node) bool {
 		switch x := n.(type) {
 		case *ast.FuncDecl:
-			log.Debugf("found function: %v", x.Name.Name)
+			logrus.Debugf("found function: %v", x.Name.Name)
 			if x.Name.Name != metadata.EntryPoint {
-				log.Debugf("not function entrypoint, moving on...")
+				logrus.Debugf("not function entrypoint, moving on...")
 
 				// not the entrypoint, go further into the AST
 				return true
@@ -193,7 +234,7 @@ func extractFuncFields(fl *ast.FieldList, bindings map[string]*rpc.BindingInfo, 
 	for i, p := range fl.List {
 		t := fi(i)
 		for _, n := range p.Names {
-			log.Debugf("Found parameter: %s with type: %s", n, t.String())
+			logrus.Debugf("Found parameter: %s with type: %s", n, t.String())
 
 			fields[n.Name] = &funcField{
 				Name:     n.Name,

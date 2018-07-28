@@ -2,17 +2,26 @@ package azfunc
 
 import (
 	"context"
-
-	"github.com/Azure/azure-functions-go-worker/internal/logger"
 )
 
 // Context contains the runtime context of the function
-type Context struct {
+type Context interface {
 	context.Context
-	FunctionID   string
-	InvocationID string
-	Logger       *logger.Logger
+	FunctionID() string
+	InvocationID() string
+	Log(level int, format string, args ...interface{}) error
 }
+
+// LogLevel values
+const (
+	LogTrace = iota
+	LogDebug
+	LogInformation
+	LogWarning
+	LogError
+	LogCritical
+	LogNone
+)
 
 // Timer represents a timer trigger
 type Timer struct {

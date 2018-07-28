@@ -15,8 +15,7 @@ import (
 func Run(ctx azfunc.Context, req *http.Request) (resp *http.Response) {
 
 	// additional properties are bound to ctx by Azure Functions
-	ctx.Logger.Log("function invoked: function %v, invocation %v",
-		ctx.FunctionID, ctx.InvocationID)
+	ctx.Log(azfunc.LogInformation, "function invoked: function %v, invocation %v", ctx.FunctionID(), ctx.InvocationID())
 
 	// get query param values
 	name := req.URL.Query().Get("name")

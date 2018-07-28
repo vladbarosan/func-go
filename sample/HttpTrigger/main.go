@@ -15,8 +15,7 @@ import (
 func Run(ctx azfunc.Context, req *http.Request) (*User, error) {
 
 	// additional properties are bound to ctx by Azure Functions
-	ctx.Logger.Log("function invoked: function %v, invocation %v",
-		ctx.FunctionID, ctx.InvocationID)
+	ctx.Log(azfunc.LogInformation, "function invoked: functionID %v, invocationID %v", ctx.FunctionID(), ctx.InvocationID())
 
 	// use standard library to handle incoming request
 	body, _ := ioutil.ReadAll(req.Body)
