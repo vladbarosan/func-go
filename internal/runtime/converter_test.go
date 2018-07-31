@@ -260,6 +260,56 @@ func TestConvertToTypeValue_QueueMsg(t *testing.T) {
 	}
 }
 
+func TestConvertToTypeValue_ServiceBusMsg(t *testing.T) {
+	ir := loadInvocationRequest(t, "sbTrigger_InvocationRequest.json")
+
+	testCases := []struct {
+		want reflect.Type
+	}{
+		{reflect.TypeOf((*azfunc.SBMsg)(nil))},
+		{reflect.TypeOf(azfunc.SBMsg{})},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("%v", tc.want), func(t *testing.T) {
+			r, err := convertToTypeValue(tc.want, ir.InputData[0].GetData(), ir.GetTriggerMetadata())
+
+			if err != nil {
+				t.Fatalf("failed to get a value, got error: %v", err)
+			}
+
+			if got := r.Type(); got != tc.want {
+				t.Logf("got:  %q\nwant: %q", got, tc.want)
+				t.Fail()
+			}
+
+			var v azfunc.SBMsg
+			if r.Kind() == reflect.Ptr {
+				v = r.Elem().Interface().(azfunc.SBMsg)
+			} else {
+				v = r.Interface().(azfunc.SBMsg)
+			}
+
+			expectedQueueMsg := azfunc.SBMsg{
+				Data:            "Message 1",
+				MessageID:       "429c66a736a94a2e8c6e2783e568d460",
+				DeliveryCount:   7,
+				ExpiresAtUtc:    "2018-07-31T23:54:18.288Z",
+				EnqueuedTimeUtc: "2018-07-30T23:54:18.288Z",
+				SequenceNumber:  281474976710657,
+				UserProperties: map[string]interface{}{
+					"x-opt-enqueue-sequence-number": float64(0),
+				},
+			}
+
+			if got, want := v, expectedQueueMsg; !reflect.DeepEqual(got, want) {
+				t.Logf("got:  %v\nwant: %v", got, want)
+				t.Fail()
+			}
+		})
+	}
+}
+
 func TestConvertToTypeValue_EventGridEvent(t *testing.T) {
 	ir := loadInvocationRequest(t, "eventGridEventTrigger_InvocationRequest.json")
 

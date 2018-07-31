@@ -19,6 +19,8 @@ samples=(
     "EventGridTrigger"
     "EventHubTriggerEventHubOutput"
     "EventHubTriggerBatchOutput"
+    "CosmosTriggerCosmosOutput"
+    "ServiceBusTriggerServiceBusOutput"
 )
 
 for i in "${samples[@]}"; do

@@ -1,0 +1,20 @@
+{
+  "entryPoint": "Run",
+  "bindings": [
+    {
+      "name": "msg",
+      "direction": "in",
+      "type": "serviceBusTrigger",
+      "queueName": "inputqueue",
+      "connection": "ServiceBusConnectionString"
+    },
+    {
+      "name": "task",
+      "direction": "out",
+      "type": "serviceBus",
+      "queueName": "outputqueue",
+      "connection": "ServiceBusConnectionString"
+    }
+  ],
+  "disabled": false
+}

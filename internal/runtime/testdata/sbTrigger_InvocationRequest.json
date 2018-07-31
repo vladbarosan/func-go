@@ -1,0 +1,23 @@
+{
+  "invocationId": "70e0c54b-38b1-4a1b-be0e-ee0ddacafc5e",
+  "functionId": "b4e53982-15a3-4467-a5c9-0b5ba632a946",
+  "inputData": [{ "name": "msg", "data": { "string": "Message 1" } }],
+  "triggerMetadata": {
+    "DeliveryCount": { "json": "7" },
+    "DeadLetterSource": {},
+    "ExpiresAtUtc": { "json": "\"2018-07-31T23:54:18.288Z\"" },
+    "EnqueuedTimeUtc": { "json": "\"2018-07-30T23:54:18.288Z\"" },
+    "MessageId": { "string": "429c66a736a94a2e8c6e2783e568d460" },
+    "ContentType": {},
+    "ReplyTo": {},
+    "SequenceNumber": { "json": "281474976710657" },
+    "To": {},
+    "Label": {},
+    "CorrelationId": {},
+    "UserProperties": { "json": "{\"x-opt-enqueue-sequence-number\":0}" },
+    "sys": {
+      "json":
+        "{\"MethodName\":\"ServiceBusTriggerServiceBusOutput\",\"UtcNow\":\"2018-07-31T00:49:22.6853795Z\",\"RandGuid\":\"0fe185fd-2c3b-4180-b8ae-6e68d6ca2b88\"}"
+    }
+  }
+}
