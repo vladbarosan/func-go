@@ -15,7 +15,11 @@ declare -i hosted=${2:-0}   # 0: false; 1: true
 declare -i continue=${3:-1} # 0: stop;  1: follow; 2: background
 declare run_image_uri=${4:-"${RUNTIME_IMAGE_REGISTRY}/${RUNTIME_IMAGE_REPO}:${RUNTIME_IMAGE_TAG}"}
 declare instance_name=${5:-${RUNTIME_INSTANCE_NAME}}
-declare sa_name="${6:-${STORAGE_ACCOUNT_NAME}smoker}"
+declare sa_name="${6:-${BASE_RESOURCE_NAME}storsmoker}"
+declare cdb_name="${6:-${BASE_RESOURCE_NAME}cosmossmoker}"
+declare sb_name="${6:-${BASE_RESOURCE_NAME}sbsmoker}"
+declare eh_name="${6:-${BASE_RESOURCE_NAME}ehsmoker}"
+
 declare group_name="${7:-${AZURE_GROUP_NAME_BASE}-smoker}"
 declare location=${8:-${AZURE_LOCATION_DEFAULT}}
 ## end parameters
@@ -29,6 +33,21 @@ ${__dirname}/build.sh $publish
 echo "ensuring storage account [${sa_name}]"
 ${__dirname}/util/setup_storage.sh $sa_name $group_name $location
 ## end ensure storage
+
+## ensure event hub
+echo "ensuring event hubs [${eh_name}]"
+${__dirname}/util/setup_eventhub.sh $eh_name $group_name $location
+## end ensure event hub
+
+## ensure cosomosdb
+echo "ensuring cosmosdb account [${cdb_name}]"
+${__dirname}/util/setup_cosmosdb.sh $sacdb_name_name $group_name $location
+## end ensure cosmosdb
+
+## ensure service bus
+echo "ensuring service bus queues [${sb_name}]"
+${__dirname}/util/setup_servicebus.sh $sb_name $group_name $location
+## end ensure service bus
 
 ## test instance
 # start_instance starts an instance of the Functions runtime

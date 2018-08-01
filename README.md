@@ -7,16 +7,16 @@ worker][] for Go.
 
 ## Contents:
 
-* [Run a Go Functions instance](#run-a-go-functions-instance)
-* [Write and deploy a Go Function](#write-and-deploy-a-go-function)
+- [Run a Go Functions instance](#run-a-go-functions-instance)
+- [Write and deploy a Go Function](#write-and-deploy-a-go-function)
 
 # Run a Go Functions instance
 
 Clone the repo and run one of the following to deploy an instance with
 batteries (i.e. prebuilt samples) included to:
 
-* your friendly local Docker daemon: `make local-instance`
-* Azure App Service: `make azure-instance`
+- your friendly local Docker daemon: `make local-instance`
+- Azure App Service: `make azure-instance`
 
 **NOTE** that to use Azure App Service you must specify a public registry for
 `RUNTIME_IMAGE_REGISTRY` in `.env` rather than `local`.
@@ -37,20 +37,21 @@ created based on `.env.tpl`.
   `test/build.sh`. Add `1` as a parameter to also push to a registry. The image
   name is built from configuration in `.env`.
 
-- Run an instance of the runtime: `docker run --rm --publish 8080:80 --env
-  "AzureWebJobsStorage=$STORAGE_CONNSTR" local/azure-functions-go-worker:dev`.
+- Run an instance of the runtime: `docker run --rm --publish 8080:80 --env "AzureWebJobsStorage=$STORAGE_CONNSTR" local/azure-functions-go-worker:dev`.
   (The image name chosen reflects the defaults in `.env.tpl`.)
 
-To discover your Storage account connection string consider using `az storage
-account show-connection-string ...`.
+To discover your Storage account connection string consider using `az storage account show-connection-string ...`.
 
-To run Event Hubs samples, set a namespace connection string in an environment
+To run **Event Hubs** samples, set a namespace connection string in an environment
 variable, and specify that environment variable name as the value of the
 `connection` field in the functionapp's `function.json`. The variable name used
-in the samples is "EventHubConnectionSetting".
+in the samples is "EventHubConnectionSetting". This applies for **Service Bus** and **CosmosDb** samples.
 
-To discover your Event Hubs namespace connection string consider using `az
-eventhubs namespace authorization-rule list ...`.
+To discover the connection strings required you can use:
+
+- for **Event Hubs**: `az eventhubs namespace authorization-rule list ...`.
+- for **CosmosDb**: `az cosmosdb list-keys` and then the format `connstr="AccountEndpoint=https://$account_name.documents.azure.com:443/;AccountKey=$account_key;"`
+- for **Service Bus**: `az servicebus namespace authorization-rule keys list ...`
 
 ### Run locally without containers
 
@@ -64,6 +65,8 @@ FUNCTIONS_WORKER_RUNTIME=golang              # intended target language worker
 AzureWebJobsScriptRoot=/home/site/wwwroot    # path in container fs to user code
 AzureWebJobsStorage=                         # Storage account connection string
 EventHubConnectionSetting=                   # Event Hubs namespace connection string
+ServiceBusConnectionString=                  # Service Bus namespace SAS Policy ConnectionString
+CosmosDBConnectionString=                     # Cosmos Db account connection string
 ```
 
 - In `github.com/Azure/azure-functions-host`, modify
@@ -81,25 +84,24 @@ EventHubConnectionSetting=                   # Event Hubs namespace connection s
 
 Follow these high-level steps to create Go Functions:
 
-1. Write a Go Function.
-2. Deploy it.
-3. Trigger and watch it.
+1.  Write a Go Function.
+2.  Deploy it.
+3.  Trigger and watch it.
 
 Following are step-by-step instructions to prepare a Go Function triggered by
 an HttpTrigger, as demonstrated in [the HttpTrigger sample][].
 
 > See [the wiki][] and [Things to Note](#things-to-note) below for more details
-on the programming model.
+> on the programming model.
 
-[the HttpTrigger sample]: ./sample/HttpTrigger
+[the httptrigger sample]: ./sample/HttpTrigger
 [the wiki]: https://github.com/Azure/azure-functions-go-worker/wiki/Programming-Model
 
 ## Write a Go Function
 
-1. Create a directory with the files for your Go Function: `mkdir myfunc
-&& cd myfunc && touch main.go; touch function.json`.
+1.  Create a directory with the files for your Go Function: `mkdir myfunc && cd myfunc && touch main.go; touch function.json`.
 
-1. Put the following code in `main.go`.
+1.  Put the following code in `main.go`.
 
     ```go
     package main
@@ -122,7 +124,7 @@ on the programming model.
         ctx.Log(azfunc.LogInformation,"function invoked: function %v, invocation %v", ctx.FunctionID(), ctx.InvocationID())
 
         // use Go's standard library to:
-		//  handle incoming request:
+    	//  handle incoming request:
         body, _ := ioutil.ReadAll(req.Body)
 
         // to deserialize JSON content:
@@ -140,8 +142,8 @@ on the programming model.
             return nil, fmt.Errorf("missing required query parameter: name")
         }
 
-		// Prepare a struct to return. The special output binding name
-		// `$return` transforms the struct into near-equivalent JSON.
+    	// Prepare a struct to return. The special output binding name
+    	// `$return` transforms the struct into near-equivalent JSON.
         u := &User{
             Name:     name,
             Greeting: fmt.Sprintf("Hello %s. %s\n", name, data["greeting"].(string)),
@@ -150,16 +152,16 @@ on the programming model.
         return u, nil
     }
 
-	// User exemplifies a struct to be returned. You can use any struct or *struct.
+    // User exemplifies a struct to be returned. You can use any struct or *struct.
     type User struct {
         Name     string
         Greeting string
     }
     ```
 
-1. Put the following configuration in the `function.json` file next to
-   `main.go`.  `function.json` specifies bindings between incoming and outgoing
-   event properties and the structs and types in your code.
+1.  Put the following configuration in the `function.json` file next to
+    `main.go`. `function.json` specifies bindings between incoming and outgoing
+    event properties and the structs and types in your code.
 
     For more details see [the function.json
     wiki](https://github.com/Azure/azure-functions-host/wiki/function.json).
@@ -190,7 +192,7 @@ With your Function written, package and deploy it to a Go Functions instance.
 
 If you need an instance see [Run an instance][].
 
-[Run an instance]: #run-a-go-functions-instance
+[run an instance]: #run-a-go-functions-instance
 
 **TODO(joshgav)**: add scripts and instructions.
 
@@ -198,33 +200,33 @@ If you need an instance see [Run an instance][].
 
 Now your Function is live and ready to handle events. Time to trigger it!
 
-1. Use a tool like [Postman](https://www.getpostman.com/apps) or `curl` to
-execute a request with the following parameters (in this case for a local
-instance on port 8080):
+1.  Use a tool like [Postman](https://www.getpostman.com/apps) or `curl` to
+    execute a request with the following parameters (in this case for a local
+    instance on port 8080):
 
-    ```
-    HTTP Method: `POST`
-    URL: `http://localhost:8080/api/HttpTrigger?name=world`
-    Headers: `Content-Type: application/json`
-    Body: `{"greeting": "How are you?"}`
-    ```
+        ```
+        HTTP Method: `POST`
+        URL: `http://localhost:8080/api/HttpTrigger?name=world`
+        Headers: `Content-Type: application/json`
+        Body: `{"greeting": "How are you?"}`
+        ```
 
-    ```bash
-    declare PORT=8080 PERSON_NAME=world
-    curl -L "http://localhost:${PORT}/api/HttpTrigger?name=${PERSON_NAME}" \
-        --data '{ "greeting": "How are you?" }' \
-        --header 'Content-Type: application/json' \
-    ```
+        ```bash
+        declare PORT=8080 PERSON_NAME=world
+        curl -L "http://localhost:${PORT}/api/HttpTrigger?name=${PERSON_NAME}" \
+            --data '{ "greeting": "How are you?" }' \
+            --header 'Content-Type: application/json' \
+        ```
 
-    The `Run` method from the sample should be executed and a User object with
-    Name and Greeting properties like the following should be returned:
+        The `Run` method from the sample should be executed and a User object with
+        Name and Greeting properties like the following should be returned:
 
-    ```json
-	{
-	  "Name": "world",
-	  "Greeting": "Hello world. How are you?\n"
-	}
-    ```
+        ```json
+        {
+          "Name": "world",
+          "Greeting": "Hello world. How are you?\n"
+        }
+        ```
 
 # More information
 
@@ -240,8 +242,7 @@ instance on port 8080):
   into the built binary.
 - Structs in the function signature are initialized based on properties in the
   incoming event and specifications in function.json. In the example signature
-  of `func Run(ctx azfunc.Context, req *http.Request) User`; `ctx
-  azfunc.Context`, `req *http.Request` and `User` are automatically bound to
+  of `func Run(ctx azfunc.Context, req *http.Request) (User, error)`; `ctx azfunc.Context`, `req *http.Request` and `User` are automatically bound to
   incoming and outgoing message properties. Properties received from the GRPC
   channel are bound to properties on the Go structs, and any Go struct with the
   named properties can be used; that is, there's nothing special about the

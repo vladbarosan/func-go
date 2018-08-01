@@ -14,8 +14,8 @@ COPY --from=dotnet-env /sample ./sample
 RUN ls -R ./sample
 RUN curl -sSL https://raw.githubusercontent.com/golang/dep/master/install.sh | sh \
     && dep ensure -v -vendor-only \
-    && chmod +x ./build-native.sh \
-    && ./build-native.sh
+    && chmod +x ./build.sh \
+    && ./build.sh native
 
 # 3. copy built worker and extensions to runtime image
 # ARG instructions used here must be declared before first FROM
