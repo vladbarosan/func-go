@@ -2,7 +2,7 @@
 
 
 [[projects]]
-  digest = "1:2c38661f5fb038bfb95197e0e5bc7a8f050d1f992c5ddaa01945e58fe2ef00de"
+  digest = "1:3fcbf733a8d810a21265a7f2fe08a3353db2407da052b233f8b204b5afc03d9b"
   name = "github.com/Sirupsen/logrus"
   packages = ["."]
   pruneopts = ""
@@ -10,7 +10,7 @@
   version = "v1.0.6"
 
 [[projects]]
-  digest = "1:b1d3041d568e065ab4d76f7477844458e9209c0bb241eaccdc0770bf0a13b120"
+  digest = "1:f958a1c137db276e52f0b50efee41a1a389dcdded59a69711f3e872757dab34b"
   name = "github.com/golang/protobuf"
   packages = [
     "jsonpb",
@@ -34,7 +34,7 @@
   version = "v1.0"
 
 [[projects]]
-  digest = "1:39c598f67d5d68846c05832bb351e897091edcbee4689c57d3697f68f25f928d"
+  digest = "1:a1403cc8a94b8d7956ee5e9694badef0e7b051af289caad1cf668331e3ffa4f6"
   name = "github.com/spf13/cobra"
   packages = ["."]
   pruneopts = ""
@@ -51,7 +51,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:798981f04990c9da3f4fde5d7b717e9cdabed624450aaecf01e9a2896d076040"
+  digest = "1:cae234a803b78380e4d769db6036b9fcc8c08ed4ff862571ffc1a958edc1f629"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = ""
@@ -59,7 +59,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:4ab65de61f6eeee6a03fe2ffc3978230d8500ff81d984680a74bfe43bc8598c9"
+  digest = "1:be23bbce7dc7ac277c5914a43e2dafe81b0f1feda1451334de6cc28b921a2ab2"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -71,11 +71,11 @@
     "trace",
   ]
   pruneopts = ""
-  revision = "c4299a1a0d8524c11563db160fbf9bddbceadb21"
+  revision = "49c15d80dfbc983ea25246ee959d970efe09ec09"
 
 [[projects]]
   branch = "master"
-  digest = "1:cfc5bd16b264cf9960abb45ecc09e4f3c70638d838f0d9c18e39b5b35af45e86"
+  digest = "1:dd631ee90bd2e7aa16b6e094217d77a797684b52811374c948c695cbb46b5bbb"
   name = "golang.org/x/sys"
   packages = [
     "unix",
@@ -85,7 +85,7 @@
   revision = "bd9dbc187b6e1dacfdd2722a87e83093c2d7bd6e"
 
 [[projects]]
-  digest = "1:af9bfca4298ef7502c52b1459df274eed401a4f5498b900e9a92d28d3d87ac5a"
+  digest = "1:5acd3512b047305d49e8763eef7ba423901e85d5dd2fd1e71778a0ea8de10bd4"
   name = "golang.org/x/text"
   packages = [
     "collate",
@@ -109,14 +109,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:55a8c2ecdface380f254c5c765cd9196618e4d033f42a6140a5c446d42efd410"
+  digest = "1:c7ecd434ece8887311c33ea3c731e2fb42f43092a43545e350b493b9dcb023b2"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   pruneopts = ""
-  revision = "2a72893556e4d1f6c795a4c039314c9fa751eedb"
+  revision = "daca94659cb50e9f37c1b834680f2e46358f10b0"
 
 [[projects]]
-  digest = "1:05f2028524c4eada11e3f46d23139f23e9e0a40b2552207a5af278e8063ce782"
+  digest = "1:ca75b3775a5d4e5d1fb48f57ef0865b4aaa8b3f00e6b52be68db991c4594e0a7"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -132,7 +132,9 @@
     "internal",
     "internal/backoff",
     "internal/channelz",
+    "internal/envconfig",
     "internal/grpcrand",
+    "internal/transport",
     "keepalive",
     "metadata",
     "naming",
@@ -143,11 +145,10 @@
     "stats",
     "status",
     "tap",
-    "transport",
   ]
   pruneopts = ""
-  revision = "168a6198bcb0ef175f7dacec0b8691fc141dc9b8"
-  version = "v1.13.0"
+  revision = "32fb0ac620c32ba40a4626ddf94d90d12cce3455"
+  version = "v1.14.0"
 
 [solve-meta]
   analyzer-name = "dep"

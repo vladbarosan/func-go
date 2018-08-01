@@ -8,7 +8,7 @@ RUN dotnet build /sample -o bin
 # 2. build worker with go
 FROM golang:1.10 as golang-env
 WORKDIR /go/src/github.com/Azure/azure-functions-go-worker
-ENV DEP_RELEASE_TAG=v0.4.1
+ENV DEP_RELEASE_TAG=v0.5.0
 COPY . .
 COPY --from=dotnet-env /sample ./sample
 RUN ls -R ./sample

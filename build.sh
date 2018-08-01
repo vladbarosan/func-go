@@ -33,4 +33,4 @@ for file in sample/*/ ; do
     fi
 done
 
-sudo chmod +rx $(pwd)/workers/golang/golang-worker
+chmod +rx $(pwd)/workers/golang/golang-worker
