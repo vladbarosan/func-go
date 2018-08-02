@@ -4,6 +4,13 @@
 # add `-gcflags '-N -l'` to 'go build ...' to compile for debugging
 
 buildMode=$1 # use 'native' to do a native build , 'docker' to build through docker(default).
+verbose=$2
+
+if [ "$verbose" == 'verbose' ]; then
+    set -ev
+else
+    set -e
+fi
 
 if [ "$buildMode" == 'native' ]; then
     echo "building worker and functions natively..."

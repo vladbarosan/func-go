@@ -1,0 +1,30 @@
+sudo: false
+
+language: go
+go:
+  - 1.10.x
+
+branches:
+  only:
+  - dev
+
+env:
+  global:
+    - DEP_RELEASE_TAG=v0.5.0
+
+before_install:
+  - curl -sSL https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+
+install:
+  - go get -u github.com/golang/lint/golint
+  - go get -u github.com/securego/gosec/cmd/gosec/...
+  - dep ensure -v -vendor-only
+
+script:
+  - test -z "$(go fmt $(go list ./... | grep -v 'vendor|rpc') | tee /dev/stderr)"
+  - test -z "$(golint $(go list ./... | grep -v 'vendor|rpc') |  tee /dev/stderr)"
+  - go vet $(go list ./... | grep -v 'vendor|rpc')
+  - test -z "$(gosec ./internal/... | tee /dev/stderr | grep Error -v pb.go)"
+  - ./build.sh native verbose
+  - go generate ./internal/runtime/testdata/HttpTriggerBlobBindings/...
+  - go test ./internal/... | grep -v "no test files"

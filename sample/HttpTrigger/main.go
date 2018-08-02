@@ -25,7 +25,7 @@ func Run(ctx azfunc.Context, req *http.Request) (*User, error) {
 	var err error
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal JSON: %s\n", err)
+		return nil, fmt.Errorf("failed to unmarshal json: %s", err)
 	}
 
 	// get query param values
