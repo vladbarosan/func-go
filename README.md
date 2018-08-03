@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.com/Azure/azure-functions-go-worker.svg?token=pzfiiBDjqjzLCtQCMpq1&branch=dev)](https://travis-ci.com/Azure/azure-functions-go-worker)
 
 This project adds Go support to Azure Functions by implementing a [language
-worker][] for Go.
+worker][] for Go. Note that only Go 1.10+ is supported. Supported platforms are Linux and Mac.
 
 [language worker]: https://github.com/Azure/azure-functions-host/wiki/Language-Extensibility
 
@@ -57,7 +57,7 @@ To discover the connection strings required you can use:
 
 ### Run locally without containers
 
-- Build the worker and the samples: `build.sh`
+- Build the worker and the samples: `build.sh native bundle`
 - Get and install the [functions runtime](https://github.com/Azure/azure-functions-host)
   per instructions in that repo.
 - Set environment variables:

@@ -1,4 +1,6 @@
-// +build linux,cgo darwin,cgo
+// +build linux darwin
+// +build go1.10
+// +build cgo
 
 package runtime
 
