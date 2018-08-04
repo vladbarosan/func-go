@@ -7,7 +7,7 @@ RUN dotnet build /sample -o bin
 
 # 2. build worker with go
 FROM golang:1.10 as golang-env
-WORKDIR /go/src/github.com/Azure/azure-functions-go-worker
+WORKDIR /go/src/github.com/vladbarosan/func-go
 ENV DEP_RELEASE_TAG=v0.5.0
 COPY . .
 COPY --from=dotnet-env /sample ./sample
@@ -23,12 +23,12 @@ FROM ${RUNTIME_IMAGE}
 
 # copy worker to predefined path
 COPY --from=golang-env \
-    /go/src/github.com/Azure/azure-functions-go-worker/workers/golang \
+    /go/src/github.com/vladbarosan/func-go/workers/golang \
     /azure-functions-host/workers/golang/
 
 # copy samples to predefined path
 COPY --from=golang-env \
-    /go/src/github.com/Azure/azure-functions-go-worker/sample \
+    /go/src/github.com/vladbarosan/func-go/sample \
     /home/site/wwwroot
 
 # use predefined env var names to point to worker start script

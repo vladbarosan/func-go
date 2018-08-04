@@ -1,9 +1,9 @@
 package worker
 
 import (
-	"github.com/Azure/azure-functions-go-worker/internal/rpc"
-	"github.com/Azure/azure-functions-go-worker/internal/runtime"
 	log "github.com/Sirupsen/logrus"
+	"github.com/vladbarosan/func-go/internal/rpc"
+	"github.com/vladbarosan/func-go/internal/runtime"
 )
 
 type worker struct {

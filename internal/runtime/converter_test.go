@@ -10,8 +10,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Azure/azure-functions-go-worker/azfunc"
-	"github.com/Azure/azure-functions-go-worker/internal/rpc"
+	"github.com/vladbarosan/func-go/azfunc"
+	"github.com/vladbarosan/func-go/internal/rpc"
 	"github.com/golang/protobuf/jsonpb"
 )
 

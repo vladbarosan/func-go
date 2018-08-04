@@ -19,8 +19,8 @@ if [ "$mode" == 'native' ]; then
 else
     echo "building worker..."
     docker run -it \
-        -v $(pwd):/go/src/github.com/Azure/azure-functions-go-worker \
-        -w /go/src/github.com/Azure/azure-functions-go-worker \
+        -v $(pwd):/go/src/github.com/vladbarosan/func-go \
+        -w /go/src/github.com/vladbarosan/func-go \
          golang:1.10 /bin/bash -c "go build -o workers/golang/golang-worker"
 fi
 
@@ -36,8 +36,8 @@ if [ "$bundle" == 'bundle' ]; then
                 env GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -buildmode=plugin -o "sample/$s/bin/$s.so" "sample/$s/main.go"
             else
                 docker run -it \
-                    -v $(pwd):/go/src/github.com/Azure/azure-functions-go-worker \
-                    -w /go/src/github.com/Azure/azure-functions-go-worker \
+                    -v $(pwd):/go/src/github.com/vladbarosan/func-go \
+                    -w /go/src/github.com/vladbarosan/func-go \
                      golang:1.10 /bin/bash -c "go build -buildmode=plugin -o sample/$s/bin/$s.so sample/$s/main.go"
             fi
         fi

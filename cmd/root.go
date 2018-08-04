@@ -6,9 +6,9 @@ import (
 	"math"
 	"os"
 
-	"github.com/Azure/azure-functions-go-worker/internal/worker"
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/vladbarosan/func-go/internal/worker"
 )
 
 var (

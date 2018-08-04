@@ -9,7 +9,7 @@ import (
 	"plugin"
 	"reflect"
 
-	"github.com/Azure/azure-functions-go-worker/internal/rpc"
+	"github.com/vladbarosan/func-go/internal/rpc"
 	logrus "github.com/Sirupsen/logrus"
 )
 

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/Azure/azure-functions-go-worker/internal/rpc"
 	log "github.com/Sirupsen/logrus"
+	"github.com/vladbarosan/func-go/internal/rpc"
 	"google.golang.org/grpc"
 )
 
